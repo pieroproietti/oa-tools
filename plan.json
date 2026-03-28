@@ -10,8 +10,8 @@
     },
     { 
       "command": "action_iso", 
-      "volume_id": "COLIBRI_VITELLUS",
-      "filename": "colibri-vitellus-final.iso" 
+      "volume_id": "VITELLUS",
+      "filename": "egg-of_debian-trixie-vitellus_amd64.iso" 
     },
     { "command": "action_cleanup" }
   ]

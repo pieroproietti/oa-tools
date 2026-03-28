@@ -21,6 +21,8 @@ static void append_eggs_exclusion(char *buffer, size_t buf_size, const char *pat
  * @brief Prepara lo scheletro della ISO (Bootloader e Kernel)
  * Ispirato alla "via di Adrian" (mx-snapshot): resiliente e standalone.
  */
+#include <sys/utsname.h>
+
 int action_skeleton(cJSON *json) {
     cJSON *pathLiveFs = cJSON_GetObjectItemCaseSensitive(json, "pathLiveFs");
     if (!cJSON_IsString(pathLiveFs)) return 1;
@@ -30,48 +32,69 @@ int action_skeleton(cJSON *json) {
     snprintf(live_dir, 1024, "%s/iso/live", pathLiveFs->valuestring);
     snprintf(isolinux_dir, 1024, "%s/isolinux", iso_dir);
 
-    printf("{\"status\": \"imaging\", \"step\": \"skeleton\", \"msg\": \"Building boot structure...\"}\n");
-
+    // 1. Setup Struttura
     char cmd[4096];
-    // 1. Creazione directory
     snprintf(cmd, sizeof(cmd), "mkdir -p %s %s %s/boot/grub", live_dir, isolinux_dir, iso_dir);
     system(cmd);
 
-    // 2. Copia Binari BIOS (Fallback su percorsi standard Debian/Devuan)
-    printf("\033[1;34m[Vitellus]\033[0m Collecting binaries from host system...\n");
-    const char *syslinux_bins[] = {
-        "/usr/lib/ISOLINUX/isolinux.bin",
-        "/usr/lib/syslinux/modules/bios/ldlinux.c32",
-        "/usr/lib/syslinux/modules/bios/libcom32.c32",
-        "/usr/lib/syslinux/modules/bios/libutil.c32",
-        "/usr/lib/syslinux/modules/bios/vesamenu.c32"
-    };
+    // 2. Rilevamento Kernel
+    struct utsname buffer;
+    if (uname(&buffer) != 0) return 1;
+    char *kversion = buffer.release;
 
-    for (int i = 0; i < 5; i++) {
-        if (access(syslinux_bins[i], F_OK) == 0) {
-            snprintf(cmd, sizeof(cmd), "cp %s %s/", syslinux_bins[i], isolinux_dir);
-            system(cmd);
-        }
+    printf("{\"status\": \"imaging\", \"step\": \"skeleton\", \"kernel\": \"%s\", \"distro_hint\": \"debian_way\"}\n", kversion);
+
+    // 3. Copia Kernel (usando il percorso diretto di /boot per evitare symlink rotti)
+    printf("\033[1;34m[Vitellus]\033[0m Copying kernel vmlinuz-%s...\n", kversion);
+    snprintf(cmd, sizeof(cmd), "cp /boot/vmlinuz-%s %s/vmlinuz", kversion, live_dir);
+    if (system(cmd) != 0) {
+        // Fallback estremo al symlink in root
+        system("cp -L /vmlinuz %s/vmlinuz");
     }
 
-    // 3. Generazione isolinux.cfg minimale se assente
+    // 4. Generazione Initrd (Debian-Only for now)
+    printf("\033[1;34m[Vitellus]\033[0m Generating initrd via mkinitramfs...\n");
+    if (access("/usr/sbin/mkinitramfs", X_OK) == 0) {
+        snprintf(cmd, sizeof(cmd), "mkinitramfs -o %s/initrd.img %s", live_dir, kversion);
+        int res = system(cmd);
+        if (res != 0) {
+            fprintf(stderr, "{\"status\": \"error\", \"msg\": \"mkinitramfs failed\"}\n");
+            return 1;
+        }
+    } else {
+        printf("\033[1;31m[Warning]\033[0m mkinitramfs not found. Falling back to copy (risky)...\n");
+        snprintf(cmd, sizeof(cmd), "cp /boot/initrd.img-%s %s/initrd.img || cp -L /initrd.img %s/initrd.img", 
+                 kversion, live_dir, live_dir);
+        system(cmd);
+    }
+
+    // 5. Bootloader BIOS (Isolinux)
+    printf("\033[1;34m[Vitellus]\033[0m Populating Isolinux binaries...\n");
+    // Copiamo i file critici. Nota: usiamo il wildcard per i moduli .c32
+    snprintf(cmd, sizeof(cmd), "cp /usr/lib/ISOLINUX/isolinux.bin %s/ && "
+                               "cp /usr/lib/syslinux/modules/bios/*.c32 %s/", 
+             isolinux_dir, isolinux_dir);
+    system(cmd);
+
+    // 6. Configurazione Isolinux (Se manca, la creiamo)
     char cfg_path[1024];
     snprintf(cfg_path, 1024, "%s/isolinux.cfg", isolinux_dir);
     if (access(cfg_path, F_OK) != 0) {
         FILE *f = fopen(cfg_path, "w");
         if (f) {
-            fprintf(f, "UI vesamenu.c32\nPROMPT 0\nTIMEOUT 50\nDEFAULT live\n"
-                       "LABEL live\n  MENU LABEL Vitellus Live\n"
+            fprintf(f, "UI vesamenu.c32\n"
+                       "PROMPT 0\n"
+                       "TIMEOUT 50\n"
+                       "DEFAULT live\n"
+                       "MENU TITLE Vitellus Boot Menu\n"
+                       "LABEL live\n"
+                       "  MENU LABEL Vitellus Live (Debian Core)\n"
                        "  KERNEL /live/vmlinuz\n"
                        "  APPEND initrd=/live/initrd.img boot=live components quiet splash\n");
             fclose(f);
+            printf("\033[1;32m[Vitellus]\033[0m isolinux.cfg generated.\n");
         }
     }
-
-    // 4. Copia Kernel e Initrd (Usa i symlink di sistema /vmlinuz e /initrd.img)
-    printf("\033[1;34m[Vitellus]\033[0m Syncing kernel and initrd...\n");
-    snprintf(cmd, sizeof(cmd), "cp -L /vmlinuz %s/vmlinuz && cp -L /initrd.img %s/initrd.img", live_dir, live_dir);
-    system(cmd);
 
     return 0;
 }
