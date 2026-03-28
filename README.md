@@ -18,7 +18,8 @@ Designed as a **standalone engine** to power **penguins-eggs** and other remaste
 
 * **Independent ISO Builder**: A standalone "Skeleton" engine inspired by the *AdrianTM* philosophy—extracting bootloaders and kernels directly from the host system without external dependencies.
 
-* **Safe Bind Mounts**: Manages system mounts (`/dev`, `/proc`, `/sys`) using private propagation (`MS_PRIVATE`) to ensure the host system remains untouched.
+
+* **Safe Filesystem Orchestration**: Vitellus manages the entire root structure (`bin`, `etc`, `usr`, `var`...) while safely bind-mounting critical kernel interfaces (`/dev`, `/proc`, `/sys`, `/run`) using private propagation (`MS_PRIVATE`) to ensure the host system remains untouched.
 
 * **Smart Exclusions**: Supports complex exclusion lists with intelligent branch skipping (`FTW_SKIP_SUBTREE`) for maximum efficiency.
 
@@ -126,4 +127,4 @@ sudo ./vitellus plan.json
 
 *Developed with the efficiency of C and the reliability of a Clipper '87 veteran.*
 
-> **Historical Note:** From the start of penguins-eggs, I was convinced that my work was a direct descendant of *refracta-snapshot* and really it is. However, I recently discovered—directly from Adrian himself—that *refracta-snapshot* was another derivative of his original project. 
+> **Historical Note:** From the start of penguins-eggs, I was convinced that my work was a direct descendant of *refracta-snapshot* and really it is. However, I recently discovered—directly from Adrian himself—that *refracta-snapshot* was another derivative of his original project. l
