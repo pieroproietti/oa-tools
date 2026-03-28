@@ -2,7 +2,7 @@
 
 **Vitellus** (Latin for *yolk*) is a high-performance core engine written in C, designed for GNU/Linux system remastering. It was born to replace fragile and slow Bash scripting with the precision and power of native Linux kernel syscalls.
 
-Designed as an agnostic bridge between **penguins-eggs** and other remastering tools like **MX-Snapshot** — the technical predecessor of penguins-eggs — Vitellus provides a clean, JSON-based interface to manage critical system-level operations.
+Designed as an agnostic bridge between **penguins-eggs** and other remastering tools like **MX-Snapshot** — the real father of penguins-eggs — Vitellus provides a clean, JSON-based interface to manage critical system-level operations.
 
 ## 🚀 Key Features
 
@@ -38,7 +38,7 @@ Vitellus can execute complex workflows through a `plan.json`. This allows for a 
     },
     { 
       "command": "action_iso", 
-      "volume_id": "VITELIUS_LIVE", 
+      "volume_id": "VITELLUS_LIVE", 
       "filename": "live-system.iso" 
     },
     { "command": "action_cleanup" }
