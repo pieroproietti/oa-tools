@@ -2,7 +2,7 @@
 
 **Vitellus** (Latin for *yolk*) is a high-performance core engine written in C, designed for GNU/Linux system remastering. It was born to replace fragile and slow Bash scripting with the precision and power of native Linux kernel syscalls.
 
-Designed as an agnostic bridge between **penguins-eggs** and **MX-Snapshot**, Vitellus provides a clean, JSON-based interface to manage critical system-level operations.
+Designed as an agnostic bridge between **penguins-eggs** and othere remastering tools like **MX-Snapshot**, Vitellus provides a clean, JSON-based interface to manage critical system-level operations.
 
 ## 🚀 Key Features
 
@@ -22,29 +22,31 @@ gcc src/*.c -Isrc -o vitellus -lm
 
 ## 📂 Task Structure (Example)
 
-Vitellus executes atomic operations based on JSON input. For example, to prepare a work environment:
+Vitellus executes atomic operations based on JSON input or a plan.json file. 
+
+For example, to prepare a work environment:
 
 ```json
 {
-  "command": "mount_binded",
-  "workdir": "/tmp/vitellus_work",
-  "mounts": [
-    {"source": "/dev", "target": "dev"},
-    {"source": "/proc", "target": "proc"},
-    {"source": "/sys", "target": "sys"}
-  ]
+    "command": "action_prepare",
+    "pathLiveFs": "/home/eggs"
 }
 ```
 
 **Execution:**
 ```bash
-sudo ./vitellus task.json
+sudo ./vitellus prepare.json
+```
+or
+```bash
+sudo ./vitellus plan.json
 ```
 
 ## 🗺 Roadmap
 
+- [ ] Filesystem Scanning with external exclusion file support.
 - [x] Secure Mount/Umount Engine.
-- [x] Filesystem Scanning with external exclusion file support.
+- [ ] Creating filesystem.squashfs and iso image
 - [ ] Implementation of Hooks for chroot customization.
 - [ ] Direct integration into `penguins-eggs` as the primary analysis engine.
 

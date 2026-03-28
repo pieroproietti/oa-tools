@@ -1,0 +1,8 @@
+{
+    "command": "action_run",
+    "pathLiveFs": "/home/eggs",
+    "run_command": "/usr/bin/apt",
+    "args": [
+        "--version"
+    ]
+}
