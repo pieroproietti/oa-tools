@@ -128,4 +128,6 @@ sudo ./oa plan.json
 
 *Developed with the efficiency of C and the reliability of a Clipper '87 veteran.*
 
-> **Historical Note:** From the start of penguins-eggs, I was convinced that my work was a direct descendant of *refracta-snapshot* and really it is. However, I recently discovered—directly from Adrian himself—that *refracta-snapshot* was another derivative of his original project. l
+> **Historical Note:** When I started penguins-eggs, I was convinced that my work was a direct descendant of refracta-snapshot—and in practice, it was. However, I later discovered a deeper truth directly from Adrian himself: mx-snapshot was the original progenitor.
+
+> For a long time, I believed that mx-snapshot was based on refracta-snapshot, mainly because the latter was the one better documented or simply the first to come into my hands. It was only later that I realized it was the other way around. Most importantly, it was from mx-snapshot that I drew the core concept that changed everything: the "nocopy" approach, creating a snapshot without copy the real filesystem, but working directly on the structure.
