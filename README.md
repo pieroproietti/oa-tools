@@ -135,4 +135,5 @@ When I started penguins-eggs, I explored the landscape of the time, studying Sys
 
 Most importantly, I later re-adopted the core concept that had been set aside in Refracta: the avoidance of copying the live running filesystem. I achieved this by implementing it through a different, modern path: OverlayFS.
 
-[Philosofy](https://penguins-eggs.net/blog/eggs-bananas).
+
+For those interested in the philosophy behind the project, I recommend this [article](https://penguins-eggs.net/blog/eggs-bananas) on my blog.
