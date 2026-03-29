@@ -43,7 +43,7 @@ Every operation in **oa** is driven by a JSON "Plan." This document defines the 
 | :--- | :--- | :--- |
 | `kernel_path` | String | Source path of the kernel (e.g., `/vmlinuz` or `/boot/vmlinuz-linux`). |
 | `initrd_cmd` | String | Shell template to generate the initrd (e.g., `mkinitramfs -o {{out}} {{ver}}`). |
-| `group_names` | String[] | Group names array`[cdrom, floppy, sudo, audio, dip, video, plugdev, netdev, autologin]`. |
+| `groups` | Array | Group names array`[cdrom, floppy, sudo, audio, dip, video, plugdev, netdev, autologin]`. |
 | `mode` | String | mode `""/"clone"/"homecrypt"/"fullcrypt"`|
 
 **Behavior**:
