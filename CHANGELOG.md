@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.1.0] - 2026-03-30
 
 ### Added
+- contest.sh create a context.XXX.txt to restore GEMINI contest;
 - **Modular Architecture**: Decoupled core logic into `src/actions/`, making the project significantly more scalable and maintainable.
 - **Execution Engine**: Implemented the `execute_verb` dispatch system in `main.c` to process the `plan.json` workflow.
 - TODO: **Parameter Inheritance**: Added dual-pointer support (`cJSON *root` and `cJSON *task`) allowing actions to access both Global settings and Local task overrides.
