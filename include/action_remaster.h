@@ -4,7 +4,6 @@
 *
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
-
 */
 #ifndef ACTION_REMASTER_H
 #define ACTION_REMASTER_H

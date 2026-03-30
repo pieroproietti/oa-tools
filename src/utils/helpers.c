@@ -4,14 +4,8 @@
 *
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
-
 */
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/utsname.h>
+#include "oa.h"
 
 /**
  * @brief Aggiunge un pattern di esclusione formattato per mksquashfs

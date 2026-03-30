@@ -4,7 +4,6 @@
 *
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
-
 */
 #ifndef ACTION_PREPARE_H
 #define ACTION_PREPARE_H

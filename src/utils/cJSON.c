@@ -1,12 +1,4 @@
 /*
-* oa: eggs in my dialect🥚🥚
-* remastering core
-*
-* Author: Piero Proietti <piero.proietti@gmail.com>
-* License: GPL-3.0-or-later
-
-*/
-/*
   Copyright (c) 2009-2017 Dave Gamble and cJSON contributors
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
