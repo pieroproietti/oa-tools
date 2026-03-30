@@ -46,43 +46,33 @@ oa can execute complex workflows through a `plan.json`. This allows for a full r
 
 
 ```json
-
 {
-
   "pathLiveFs": "/home/eggs",
-
+  "mode": "",
+  "initrd_cmd": "mkinitramfs -o {{out}} {{ver}}",
   "plan": [
-
-    { "command": "action_prepare" },
-
-    { "command": "action_skeleton" },
-
-    { 
-
-      "command": "action_squash", 
-
-      "compression": "zstd", 
-
-      "compression_level": 3 
-
+    {
+      "command": "action_prepare"
     },
-
-    { 
-
-      "command": "action_iso", 
-
-      "volume_id": "OA_LIVE", 
-
-      "filename": "live-system.iso" 
-
+    {
+      "command": "action_initrd"
     },
-
-    { "command": "action_cleanup" }
-
+    {
+      "command": "action_remaster"
+    },
+    {
+      "command": "action_squash"
+    },
+    {
+      "command": "action_iso",
+      "volid": "EGGS_CUSTOM_2026",
+      "output_iso": "egg-of_debian-trixie-oa_amd64.iso"
+    },
+    {
+      "command": "action_cleanup"
+    }
   ]
-
 }
-
 ```
 
 
