@@ -1,0 +1,3 @@
+sudo oa json/actions/cleanup.json 
+sudo eggs kill -n
+

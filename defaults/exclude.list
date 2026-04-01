@@ -1,0 +1,133 @@
+# Based on: https://git.devuan.org/devuan/refractasnapshot-base/src/branch/master/snapshot_exclude.list
+#
+# Location: /etc/penguins-eggs/exclude.list.d/master.list
+#
+# This is a template, from the original exclude.list of refracta-snapshot
+#
+# Authors: fsmithred (original)
+#          Hosein Seilany
+#          Piero Proietti, 
+#          Tim Wallace, 
+#          wfrcrd@github.com
+#
+# NOTE: all is alfabetic sorted using code->command palette->sortes lines ascending
+######################################################################################################
+
+# SYSTEM:  Exclude some system files - These are required, and you probably shouldn't change them.
+#          They are temporary files only created on bootup - otherwise would waste space on a clone
+cdrom/*
+dev/*
+media/*
+mnt/*
+proc/*
+swapfile
+sys/*
+tmp/*
+
+home/eggs/liveroot/*
+
+# fedora/el9/etc
+boot/*rescue*
+
+
+*.cache # suggestion from blaxbox-ai
+
+######################################################################################################
+# LIVE STUFFS: files depending on live
+etc/udev/rules.d/70-persistent-cd.rules
+etc/udev/rules.d/70-persistent-net.rules
+lib/live/*
+live
+persistence.conf
+var/lib/live/config/*
+
+######################################################################################################
+# HARDWARE DEPENDAND FILES: created/updated during restoration of clone by calamares
+boot/grub/device.map
+boot/grub/grub.cfg
+boot/grub/menu.lst
+etc/blkid.tab
+etc/blkid.tab.old
+etc/fstab
+etc/fstab.d/*
+etc/mtab
+
+######################################################################################################
+# CACHES: that tend to be very large and unneeded - only for Arch and Debian based Linuxes
+
+# Arch family
+home/*/.local/share/yay
+# NOT necessary: under var/cache/ we remove all
+#var/cache/pacman/pkg
+#var/cache/private/yay
+
+# Debian family
+# NOT necessary: under var/cache/ we remove all
+#var/cache/apt/apt-file/*
+#var/cache/apt/archives/*.deb
+#var/cache/apt/pkgcache.bin
+#var/cache/apt/srcpkgcache.bin
+#var/cache/debconf/*~old
+
+######################################################################################################
+# MISC: miscellanea
+.snapshots/*
+etc/apt/*~
+etc/crypttab
+etc/initramfs-tools/conf.d/cryptroot
+etc/initramfs-tools/conf.d/resume
+etc/popularity-contest.conf
+etc/skel/.config/Code
+etc/skel/.local/share/baloo/*
+etc/skel/.ZAP/*
+lost+found
+swap/*
+swapfile
+timeshift 
+
+######################################################################################################
+# usr: use this exclusions, attention this can lead to lost something
+
+# this list is intentionally blank
+
+
+######################################################################################################
+# var: use this exclusions, attention this can lead to lost something
+var/backups/*
+var/cache/* var/lib/aide/*
+var/lib/apt/*~
+var/lib/apt/cache/*
+var/lib/apt/cdroms.list
+var/lib/apt/daily_lock
+var/lib/apt/extended_states  
+var/lib/apt/listchanges.db  
+var/lib/apt/lists/
+var/lib/apt/mirrors/
+var/lib/apt/periodic/
+var/lib/aptitude/*.old
+var/lib/cache/*
+
+# NON CANCELLARE QUESTO SU DEVUAN!
+# var/lib/dbus/machine-id
+
+var/lib/dhcp/*
+var/lib/dkms/wireguard/*
+var/lib/dpkg/*~old
+var/lib/gems/2.7.0/cache/*
+var/log/*.log
+var/log/*.log.?
+var/log/*/*
+
+# Modifica per var/spool: non cancellare la directory intera, 
+# ma svuota solo directory specifiche se necessario. 
+# Se cancelli "var/spool/*" cron e rsyslog non trovano la cartella e danno errore.
+# var/spool/* var/spool/mail/*
+var/spool/postfix/*
+
+var/tmp/*
+
+
+
+
+
+

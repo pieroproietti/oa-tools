@@ -184,3 +184,54 @@ bool yocto_is_human_user(uint32_t uid, const char *home) {
 
     return true;
 }
+
+/**
+ * @brief Aggiunge nativamente un utente a un elenco di gruppi secondari in /etc/group
+ */
+void yocto_add_user_to_groups(const char *group_file, const char *username, cJSON *groups_array) {
+    if (!cJSON_IsArray(groups_array)) return;
+
+    char tmp_file[PATH_SAFE];
+    snprintf(tmp_file, sizeof(tmp_file), "%s.tmp", group_file);
+
+    FILE *src = fopen(group_file, "r");
+    FILE *dst = fopen(tmp_file, "w");
+    if (!src || !dst) {
+        if (src) fclose(src);
+        if (dst) fclose(dst);
+        return;
+    }
+
+    char line[PATH_SAFE];
+    while (fgets(line, sizeof(line), src)) {
+        line[strcspn(line, "\n")] = 0; // Rimuove il newline
+
+        char line_copy[PATH_SAFE];
+        strcpy(line_copy, line);
+        char *gname = strtok(line_copy, ":");
+
+        bool match = false;
+        cJSON *g;
+        cJSON_ArrayForEach(g, groups_array) {
+            if (cJSON_IsString(g) && strcmp(gname, g->valuestring) == 0) {
+                match = true;
+                break;
+            }
+        }
+
+        if (match) {
+            // Se la riga finisce con ':', non ci sono altri utenti. Altrimenti aggiungiamo una virgola.
+            if (line[strlen(line) - 1] == ':') {
+                fprintf(dst, "%s%s\n", line, username);
+            } else {
+                fprintf(dst, "%s,%s\n", line, username);
+            }
+        } else {
+            fprintf(dst, "%s\n", line);
+        }
+    }
+
+    fclose(src);
+    fclose(dst);
+    rename(tmp_file, group_file);
+}

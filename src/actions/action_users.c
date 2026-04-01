@@ -44,11 +44,14 @@ int action_users(OA_Context *ctx) {
     if (cJSON_IsArray(users)) {
         FILE *fp = fopen(p_path, "a");
         FILE *fs = fopen(s_path, "a");
+        
+        // Non apriamo group_file in append, verrà gestito dalla funzione helper
+        
         if (!fp || !fs) { 
-            if(fp) fclose(fp); 
+            if(fp) fclose(fp);
             if(fs) fclose(fs); 
             LOG_ERR("Failed to open passwd or shadow for appending");
-            return 1; 
+            return 1;
         }
 
         cJSON *u;
@@ -60,6 +63,7 @@ int action_users(OA_Context *ctx) {
             cJSON *gecos_obj = cJSON_GetObjectItemCaseSensitive(u, "gecos");
             cJSON *uid_obj   = cJSON_GetObjectItemCaseSensitive(u, "uid");
             cJSON *gid_obj   = cJSON_GetObjectItemCaseSensitive(u, "gid");
+            cJSON *groups_obj = cJSON_GetObjectItemCaseSensitive(u, "groups"); // <-- RECUPERO GRUPPI
 
             if (!login_obj || !pass_obj || !home_obj) {
                 LOG_WARN("Skipping user entry: missing mandatory fields (login, password or home)");
@@ -77,21 +81,31 @@ int action_users(OA_Context *ctx) {
             LOG_INFO("Handcrafting identity: %s (UID:%d GID:%d)", login, val_uid, val_gid);
             printf("\033[1;32m[oa]\033[0m Handcrafting identity: %s\n", login);
 
-            // Scrittura nei file di sistema
+            // Scrittura in passwd e shadow
             yocto_write_passwd(fp, login, val_uid, val_gid, gecos, home, shell);
             yocto_write_shadow(fs, login, pass);
 
-            // Gestione della Home Directory
+            // --- INIEZIONE NEI GRUPPI SECONDARI ---
+            if (cJSON_IsArray(groups_obj)) {
+                // Chiudiamo momentaneamente i file (opzionale, ma sicuro) o semplicemente scriviamo in g_path
+                yocto_add_user_to_groups(g_path, login, groups_obj);
+            }
+
+            // --- GESTIONE DELLA HOME CON SKEL ---
             char home_cmd[CMD_MAX];
-            snprintf(home_cmd, sizeof(home_cmd), "mkdir -p %s%s && chown %d:%d %s%s", 
-                     liveroot, home, val_uid, val_gid, liveroot, home);
+            // 1. Crea la home
+            // 2. Copia i file da /etc/skel (il "/." finale assicura che vengano copiati i file nascosti)
+            // 3. Applica il chown ricorsivo su tutto il contenuto
+            snprintf(home_cmd, sizeof(home_cmd), 
+                     "mkdir -p %s%s && cp -a %s/etc/skel/. %s%s/ 2>/dev/null || true && chown -R %d:%d %s%s", 
+                     liveroot, home, liveroot, liveroot, home, val_uid, val_gid, liveroot, home);
             
-            LOG_INFO("Setting up home: %s", home);
+            LOG_INFO("Setting up home and skel: %s", home);
             int res = system(home_cmd); 
             if (res != 0) {
                 LOG_ERR("Failed to setup home for %s. Exit status: %d", login, res);
             } else {
-                LOG_INFO("Home directory for %s created and chowned successfully", login);
+                LOG_INFO("Home directory for %s created, populated, and chowned successfully", login);
             }                     
         }
         fclose(fp);

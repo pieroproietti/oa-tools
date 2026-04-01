@@ -55,7 +55,7 @@ int action_squash(OA_Context *ctx) {
     for (size_t i = 0; i < 9; i++) append_eggs_exclusion(session_excludes, 4096, fexcludes[i]);
 
     if (strcmp(mode, "clone") != 0) {
-        append_eggs_exclusion(session_excludes, 4096, "home/*");
+        // append_eggs_exclusion(session_excludes, 4096, "home/*");
         append_eggs_exclusion(session_excludes, 4096, "root/*");
     }
 

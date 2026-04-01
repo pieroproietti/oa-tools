@@ -11,3 +11,4 @@ void yocto_write_shadow(FILE *f, const char *user, const char *enc_pass);
 void yocto_write_group(FILE *f, const char *group, int gid, const char *users);
 int yocto_sanitize_file(const char *src_path, int min_id, int max_id);
 int yocto_sanitize_shadow(const char *shadow_path, const char *passwd_path);
+void yocto_add_user_to_groups(const char *group_file, const char *username, cJSON *groups_array);

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-04-01
+
+### Added
+- **Anti-Recursion Shield (Inception Fix)**: Implemented a global `tmpfs` mask in `action_prepare.c` to hide the working directory (`pathLiveFs`) from `mksquashfs` and `nftw`. This definitively prevents infinite filesystem loops when the workspace is located inside a bind-mounted host directory (like `/home`).
+- **Native Group Injection**: Added the `yocto_add_user_to_groups` helper in `oa-yocto.c` to natively append the live user to secondary groups (e.g., `sudo`, `cdrom`) directly into `/etc/group`, completely bypassing host binaries.
+- **Skeleton Population**: `action_users` now correctly populates the live user's home directory by copying hidden configuration files from `/etc/skel` and applying recursive ownership.
+
+### Changed
+- **Smart `/home` Handling**: Refactored `action_prepare.c` to handle the `/home` directory dynamically based on the execution `mode`. It is now mounted read-only for `clone` and `crypted` modes, but created as an empty directory for `standard` mode to host the newly injected live user.
+- **Cleanup Fortification**: Updated `action_cleanup` to safely unmount the new anti-recursion masks and the `/home` directory using `umount2(..., MNT_DETACH)`.
+
+### Fixed
+- **Missing Live Home in ISO**: Fixed a bug in `action_squash.c` where the `home/*` exclusion was aggressively deleting the freshly created live user's home during the `mksquashfs` compression in `standard` mode.
+
 ## [0.1.0] - 2026-03-30
 
 ### Added
