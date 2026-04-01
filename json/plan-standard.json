@@ -5,7 +5,7 @@
   "users": [
     {
       "login": "live",
-      "password": "evolution",
+      "password": "$6$wM.wY0QtatvbQMHZ$QtIKXSpIsp2Sk57.Ny.JHk7hWDu.lxPtUYaTOiBnP4WBG5KS6JpUlpXj2kcSaaMje7fr01uiGmxZhE8kfZRqv.",
       "gecos": "live,,,",
       "home": "/home/live",
       "shell": "/bin/bash",
@@ -28,10 +28,6 @@
     },
     {
       "command": "action_users"
-    },
-    {
-      "command": "action_pause",
-      "message": "UTENTI CREATI: Verifica che /etc/passwd contenga l'utente live con UID 1000."
     },
     {
       "command": "action_initrd"

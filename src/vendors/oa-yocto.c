@@ -65,6 +65,72 @@ int yocto_sanitize_file(const char *src_path, int min_id, int max_id) {
 }
 
 /**
+ * @brief Controlla se un utente esiste nel file passwd
+ */
+static bool user_exists_in_passwd(const char *passwd_path, const char *username) {
+    FILE *f = fopen(passwd_path, "r");
+    if (!f) return false;
+    
+    char line[PATH_SAFE];
+    while (fgets(line, sizeof(line), f)) {
+        char line_copy[PATH_SAFE];
+        strcpy(line_copy, line);
+        char *user = strtok(line_copy, ":");
+        if (user && strcmp(user, username) == 0) {
+            fclose(f);
+            return true;
+        }
+    }
+    fclose(f);
+    return false;
+}
+
+/**
+ * @brief Filtra il file shadow mantenendo solo gli utenti presenti in passwd
+ */
+int yocto_sanitize_shadow(const char *shadow_path, const char *passwd_path) {
+    char tmp_path[PATH_SAFE];
+    snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", shadow_path);
+
+    FILE *src = fopen(shadow_path, "r");
+    FILE *dst = fopen(tmp_path, "w");
+    if (!src || !dst) {
+        if (src) fclose(src);
+        if (dst) fclose(dst);
+        return -1;
+    }
+
+    char line[PATH_SAFE];
+    int removed = 0, kept = 0;
+    
+    while (fgets(line, sizeof(line), src)) {
+        char line_copy[PATH_SAFE];
+        strcpy(line_copy, line);
+        char *user = strtok(line_copy, ":");
+
+        if (user) {
+            // Se l'utente è sopravvissuto alla pulizia di passwd, lo teniamo
+            if (user_exists_in_passwd(passwd_path, user)) {
+                fputs(line, dst);
+                kept++;
+            } else {
+                LOG_INFO("Shadow sanitize: purging removed user '%s'", user);
+                removed++;
+            }
+        }
+    }
+
+    fclose(src);
+    fclose(dst);
+
+    // Ripristiniamo i permessi restrittivi richiesti da PAM per shadow
+    chmod(tmp_path, 0640); 
+
+    LOG_INFO("Sanitized shadow: kept %d, removed %d entries", kept, removed);
+    return rename(tmp_path, shadow_path);
+}
+
+/**
  * @brief Verifica se il percorso della home è in una whitelist di sistema.
  */
 static bool is_path_allowed(const char *home) {

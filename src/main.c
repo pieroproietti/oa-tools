@@ -26,28 +26,46 @@ char *read_file(const char *filename) {
 // Il "Vigile Urbano": smista i verbi ai vari moduli tramite OA_Context
 int execute_verb(cJSON *root, cJSON *task) {
     cJSON *command = cJSON_GetObjectItemCaseSensitive(task, "command");
-    if (!cJSON_IsString(command) || (command->valuestring == NULL))
+    if (!cJSON_IsString(command) || (command->valuestring == NULL)) {
+        LOG_ERR("Task without a valid 'command' field found.");
         return 1;
+    }
+
+    const char *cmd_name = command->valuestring;
 
     // CREAZIONE DEL CONTESTO (Puntatori a Global + Local)
     OA_Context ctx = { .root = root, .task = task };
 
-    printf("\033[1;34m[oa]\033[0m Executing action '%s'...\n", command->valuestring);
+    // Logging dell'azione imminente
+    LOG_INFO(">>> dispatching to: %s", cmd_name);
+    printf("\033[1;34m[oa]\033[0m Executing action '%s'...\n", cmd_name);
 
-    // Mappatura comandi: tutte le azioni ora ricevono solo il puntatore a ctx
-    if (strcmp(command->valuestring, "action_prepare") == 0)  return action_prepare(&ctx);
-    if (strcmp(command->valuestring, "action_users") == 0)    return action_users(&ctx);
-    if (strcmp(command->valuestring, "action_initrd") == 0)   return action_initrd(&ctx);
-    if (strcmp(command->valuestring, "action_remaster") == 0) return action_remaster(&ctx);
-    if (strcmp(command->valuestring, "action_squash") == 0)   return action_squash(&ctx);
-    if (strcmp(command->valuestring, "action_iso") == 0)      return action_iso(&ctx);
-    if (strcmp(command->valuestring, "action_pause") == 0)    return action_pause(&ctx);
-    if (strcmp(command->valuestring, "action_cleanup") == 0)  return action_cleanup(&ctx);
-    if (strcmp(command->valuestring, "action_run") == 0)      return action_run(&ctx);
-    if (strcmp(command->valuestring, "action_scan") == 0)     return action_scan(&ctx);
+    int status = 1; // Default a errore
 
-    fprintf(stderr, "{\"error\": \"Unknown command '%s'\"}\n", command->valuestring);
-    return 1;
+    // Mappatura comandi
+    if (strcmp(cmd_name, "action_prepare") == 0)       status = action_prepare(&ctx);
+    else if (strcmp(cmd_name, "action_users") == 0)    status = action_users(&ctx);
+    else if (strcmp(cmd_name, "action_initrd") == 0)   status = action_initrd(&ctx);
+    else if (strcmp(cmd_name, "action_remaster") == 0) status = action_remaster(&ctx);
+    else if (strcmp(cmd_name, "action_squash") == 0)   status = action_squash(&ctx);
+    else if (strcmp(cmd_name, "action_iso") == 0)      status = action_iso(&ctx);
+    else if (strcmp(cmd_name, "action_pause") == 0)    status = action_pause(&ctx);
+    else if (strcmp(cmd_name, "action_cleanup") == 0)  status = action_cleanup(&ctx);
+    else if (strcmp(cmd_name, "action_run") == 0)      status = action_run(&ctx);
+    else if (strcmp(cmd_name, "action_scan") == 0)     status = action_scan(&ctx);
+    else {
+        LOG_ERR("Unknown command requested: %s", cmd_name);
+        fprintf(stderr, "{\"error\": \"Unknown command '%s'\"}\n", cmd_name);
+        return 1;
+    }
+
+    if (status == 0) {
+        LOG_INFO("<<< action %s finished successfully", cmd_name);
+    } else {
+        LOG_ERR("action %s returned exit status %d", cmd_name, status);
+    }
+
+    return status;
 }
 
 int main(int argc, char *argv[]) {
@@ -56,16 +74,25 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Inizializziamo il logger subito (es. oa.log per chiarezza)
+    oa_init_log("oa.log");
+    LOG_INFO("=== STARTING OA ENGINE ===");
+    LOG_INFO("Input plan: %s", argv[1]);
+
     char *json_data = read_file(argv[1]);
     if (!json_data) {
+        LOG_ERR("Could not read file: %s", argv[1]);
         fprintf(stderr, "Error: Could not read file %s\n", argv[1]);
+        oa_close_log();
         return 1;
     }
 
     cJSON *json = cJSON_Parse(json_data);
     if (!json) {
+        LOG_ERR("JSON parsing failed for %s", argv[1]);
         fprintf(stderr, "Error: Invalid JSON format\n");
         free(json_data);
+        oa_close_log();
         return 1;
     }
 
@@ -74,21 +101,32 @@ int main(int argc, char *argv[]) {
 
     // --- LOGICA DEL PIANO DI VOLO ---
     if (cJSON_IsArray(plan)) {
+        LOG_INFO("Plan detected: processing %d tasks", cJSON_GetArraySize(plan));
         cJSON *task;
+        int step = 0;
         cJSON_ArrayForEach(task, plan) {
-            // Esecuzione pulitissima: passiamo il root (json) e il task corrente
+            step++;
+            LOG_INFO("--- Task %d ---", step);
             if (execute_verb(json, task) != 0) {
+                LOG_ERR("Plan halted at step %d due to previous error", step);
                 fprintf(stderr, "{\"status\": \"halted\", \"error\": \"Plan failed\"}\n");
                 final_status = 1;
                 break;
             }
         }
     } else {
-        // Fallback per comando singolo (root e task coincidono)
+        LOG_INFO("No plan array found. Executing root as a single task.");
         final_status = execute_verb(json, json);
+    }
+
+    if (final_status == 0) {
+        LOG_INFO("=== PLAN COMPLETED SUCCESSFULLY ===");
+    } else {
+        LOG_ERR("=== PLAN FAILED ===");
     }
 
     cJSON_Delete(json);
     free(json_data);
+    oa_close_log();
     return final_status;
-}
+}   

@@ -7,8 +7,14 @@ CONTEXT="CONTEXT_${RAND_SUFFIX}.txt"
   for f in  context.sh \
             CHANGELOG.md \
             Makefile \
+            docs\ACTIONS.md \
+            docs\ARCHITECTURE.md \
+            docs\DISTRO_CHALLENGES.md \
+            docs\OA_Context.md \
+            docs\ROADMAP.md \
             include/oa.h \
-            include/oe-yocto.h \
+            include/oa-logs.h \
+            include/oa-yocto.h \
             json/cleanup.json  \
             json/exclude.json  \
             json/iso.json  \
@@ -25,7 +31,8 @@ CONTEXT="CONTEXT_${RAND_SUFFIX}.txt"
             src/actions/action_squash.c \
             src/actions/action_users.c \
             src/main.c \
-            src/vendors/oe-yocto.c \
+            src/vendors/oa-logger.c \
+            src/vendors/oa-yocto.c \
             ; 
     do
     if [ -f "$f" ]; then

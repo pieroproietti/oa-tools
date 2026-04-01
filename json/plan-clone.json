@@ -1,6 +1,6 @@
 {
   "pathLiveFs": "/home/eggs",
-  "mode": "standard",
+  "mode": "clone",
   "initrd_cmd": "mkinitramfs -o {{out}} {{ver}}",
   "plan": [
     {

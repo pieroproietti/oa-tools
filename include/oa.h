@@ -26,7 +26,8 @@
 
 // --- Librerie esterne ---
 #include "cJSON.h"
-#include "oe-yocto.h"
+#include "oa-logger.h"
+#include "oa-yocto.h"
 
 // --- Costanti Globali --
 #define PATH_INPUT PATH_MAX   // 4096 - Per i percorsi che leggiamo
