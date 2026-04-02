@@ -1,27 +1,7 @@
 {
   "pathLiveFs": "/home/eggs",
   "mode": "crypted",
-  "initrd_cmd": "mkinitramfs -o {{out}} {{ver}}",
-  "users": [
-    {
-      "login": "live",
-      "password": "$6$wM.wY0QtatvbQMHZ$QtIKXSpIsp2Sk57.Ny.JHk7hWDu.lxPtUYaTOiBnP4WBG5KS6JpUlpXj2kcSaaMje7fr01uiGmxZhE8kfZRqv.",
-      "gecos": "live,,,",
-      "home": "/home/live",
-      "shell": "/bin/bash",
-      "groups": [
-        "cdrom",
-        "floppy",
-        "sudo",
-        "audio",
-        "dip",
-        "video",
-        "plugdev",
-        "netdev",
-        "autologin"
-      ]
-    }
-  ],
+  "initrd_cmd": "mkinitramfs -d /home/eggs/liveroot/etc/initramfs-tools -o {{out}} {{ver}}",
   "plan": [
     {
       "command": "action_prepare"
@@ -37,6 +17,10 @@
     },
     {
       "command": "action_squash"
+    },
+    {
+      "command": "action_crypted",
+      "crypted_password": "evolution"
     },
     {
       "command": "action_iso",

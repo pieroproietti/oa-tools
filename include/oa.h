@@ -23,7 +23,6 @@
 #include <sys/mount.h>   // <--- FONDAMENTALE PER I MOUNT (MS_BIND, etc.)
 #include <ftw.h>
 
-
 // --- Librerie esterne ---
 #include "cJSON.h"
 #include "logger.h"
@@ -43,16 +42,18 @@ typedef struct {
     cJSON *task;    // Il comando specifico nel plan (configurazione locale) 
 } OA_Context;
 
-// --- Prototipi Aggiornati ---
-int action_prepare(OA_Context *ctx);
-int action_cleanup(OA_Context *ctx);
-int action_initrd(OA_Context *ctx);
-int action_remaster(OA_Context *ctx);
-int action_run(OA_Context *ctx);
-int action_scan(OA_Context *ctx);
-int action_squash(OA_Context *ctx);
-int action_iso(OA_Context *ctx);
-int action_pause(OA_Context *ctx);
-int action_users(OA_Context *ctx); 
+// --- Inclusioni dei Moduli Actions ---
+// Devono stare QUI in fondo, per evitare inclusioni circolari,
+// in modo che OA_Context sia già definito quando vengono letti.
+#include "action_prepare.h"  // Contiene anche action_cleanup
+#include "action_initrd.h"
+#include "action_remaster.h"
+#include "action_run.h"
+#include "action_scan.h"
+#include "action_squash.h"
+#include "action_iso.h"
+#include "action_pause.h"
+#include "action_users.h"
+#include "action_crypted.h"
 
 #endif

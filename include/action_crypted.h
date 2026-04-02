@@ -5,10 +5,10 @@
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
 */
-#ifndef ACTION_ISO_H
-#define ACTION_ISO_H
+#ifndef ACTION_CRYPTED_H
+#define ACTION_CRYPTED_H
 
 #include "oa.h"
-int action_iso(OA_Context *ctx);
+int action_crypted(OA_Context *ctx);
 
 #endif

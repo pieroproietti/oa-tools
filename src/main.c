@@ -48,6 +48,7 @@ int execute_verb(cJSON *root, cJSON *task) {
     else if (strcmp(cmd_name, "action_initrd") == 0)   status = action_initrd(&ctx);
     else if (strcmp(cmd_name, "action_remaster") == 0) status = action_remaster(&ctx);
     else if (strcmp(cmd_name, "action_squash") == 0)   status = action_squash(&ctx);
+    else if (strcmp(cmd_name, "action_crypted") == 0)  status = action_crypted(&ctx);
     else if (strcmp(cmd_name, "action_iso") == 0)      status = action_iso(&ctx);
     else if (strcmp(cmd_name, "action_pause") == 0)    status = action_pause(&ctx);
     else if (strcmp(cmd_name, "action_cleanup") == 0)  status = action_cleanup(&ctx);

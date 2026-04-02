@@ -30,14 +30,14 @@ int action_users(OA_Context *ctx) {
     const char *mode = cJSON_IsString(mode_item) ? mode_item->valuestring : "standard";
 
     // 2. PULIZIA: Rimuoviamo gli utenti host (UID/GID 1000-59999)
-    if (strcmp(mode, "clone") != 0) {
+    if (strcmp(mode, "clone") != 0 && strcmp(mode, "crypted") != 0) {
         printf("\033[1;34m[oa]\033[0m Purging host identities...\n");
         LOG_INFO("Purging host identities in standard mode");
         yocto_sanitize_file(p_path, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MAX); // pulisce passwd
         yocto_sanitize_shadow(s_path, p_path);                           // pulisce shadow in base a passwd
         yocto_sanitize_file(g_path, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MAX); // pulisce group
     } else {
-        LOG_INFO("Clone mode activated: preserving host identities.");
+        LOG_INFO("Clone/Crypted mode activated: preserving host identities.");
     }
     
     // 3. SCRITTURA: Creazione identità live tramite le tue funzioni vendors
