@@ -5,11 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-04-02
 
 ### 🚀 Added
+- **Smart Surgical Unmount**: `action_cleanup` now dynamically reads `/proc/mounts` to perform an inside-out unmount (`MNT_DETACH`). It specifically targets only `liveroot` and `.overlay` branches, eliminating "zombie mounts" safely without affecting user network shares or external drives.
+- **Absolute Path Support for ISO**: `action_iso` now detects if the `output_iso` parameter is an absolute path (starts with `/`). This allows the engine to write the final ISO directly to external mounts (like a remote NAS or USB drive) bypassing local storage entirely, removing the need for `.mnt` hidden folders or symlinks.
 - **Agnostic Bootloader Injection**: Introduced the `bootloaders_path` JSON parameter. `action_uefi` and `action_isolinux` can now dynamically pull bootloader binaries (like Debian's `grubx64.efi` and `isolinux.bin`) from an external path provided by the orchestrator, enabling universal booting for non-Debian host systems.
 - **Hybrid UEFI/BIOS ISO Master**: `action_iso` now automatically detects the presence of UEFI payloads and dynamically generates a 4MB FAT `efi.img` (via `dd`, `mkfs.vfat`, and loop mount) to inject into `xorriso` using the `-eltorito-alt-boot` flag.
 - **UEFI Trampoline Configuration**: Added a secondary `grub.cfg` inside the `EFI/BOOT/` directory to act as a trampoline. This redirects the firmware to the main `/boot/grub/grub.cfg` on the ISO9660 filesystem, completely avoiding the dreaded `grub rescue>` prompt.
 
 ### 🛠 Changed
+- **Single Responsibility Principle Enforced**: Completely removed legacy, hardcoded cleanup routines from `action_prepare.c`. Now `prepare` only mounts, and `cleanup` only unmounts.
 - **Plan JSONs Updated**: All JSON templates (`plan-standard.json`, `plan-clone.json`, `plan-crypted.json`) have been updated to include the `bootloaders_path` key and the correct modern modular actions.
 - **Code Refactoring**: Removed the legacy monolithic `action_remaster` logic completely, distributing its responsibilities natively into `action_livestruct`, `action_isolinux`, and `action_uefi`.
 
@@ -21,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - **Architecture Guide Update**: Added details about the `tmpfs` Anti-Inception shield and dynamic `/home` handling to `docs/ARCHITECTURE.md`.
 - **Actions Reference**: Completely overhauled `docs/ACTIONS.md` to reflect the new C engine modules (added `cleanup`, `crypted`, `scan`, `suspend`).
 - **README and Roadmap**: Cleaned up `README.md`, moved future goals to a dedicated `docs/ROADMAP.md`, and added links to the philosophical architecture.
+
 
 ## [0.2.0] - 2026-04-01
 
