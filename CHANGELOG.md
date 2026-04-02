@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - 2026-04-02
+
+### 🚀 Added
+- **Agnostic Bootloader Injection**: Introduced the `bootloaders_path` JSON parameter. `action_uefi` and `action_isolinux` can now dynamically pull bootloader binaries (like Debian's `grubx64.efi` and `isolinux.bin`) from an external path provided by the orchestrator, enabling universal booting for non-Debian host systems.
+- **Hybrid UEFI/BIOS ISO Master**: `action_iso` now automatically detects the presence of UEFI payloads and dynamically generates a 4MB FAT `efi.img` (via `dd`, `mkfs.vfat`, and loop mount) to inject into `xorriso` using the `-eltorito-alt-boot` flag.
+- **UEFI Trampoline Configuration**: Added a secondary `grub.cfg` inside the `EFI/BOOT/` directory to act as a trampoline. This redirects the firmware to the main `/boot/grub/grub.cfg` on the ISO9660 filesystem, completely avoiding the dreaded `grub rescue>` prompt.
+
+### 🛠 Changed
+- **Plan JSONs Updated**: All JSON templates (`plan-standard.json`, `plan-clone.json`, `plan-crypted.json`) have been updated to include the `bootloaders_path` key and the correct modern modular actions.
+- **Code Refactoring**: Removed the legacy monolithic `action_remaster` logic completely, distributing its responsibilities natively into `action_livestruct`, `action_isolinux`, and `action_uefi`.
+
+### 🐛 Fixed
+- **Missing GRUB Modules**: Fixed an issue in `action_uefi` where `*.mod` and `*.lst` files were not copied to the `x86_64-efi` directory, causing boot failures.
+
+### 📚 Documented
+- **Universal Strategy Manifesto**: Created `docs/UNIVERSAL_STRATEGY.md` outlining the 4 pillars of the *penguins-eggs* ecosystem (Debian Passepartout, Yocto-style identity, Initramfs abstraction, and the Orchestrator role).
+- **Architecture Guide Update**: Added details about the `tmpfs` Anti-Inception shield and dynamic `/home` handling to `docs/ARCHITECTURE.md`.
+- **Actions Reference**: Completely overhauled `docs/ACTIONS.md` to reflect the new C engine modules (added `cleanup`, `crypted`, `scan`, `suspend`).
+- **README and Roadmap**: Cleaned up `README.md`, moved future goals to a dedicated `docs/ROADMAP.md`, and added links to the philosophical architecture.
+
 ## [0.2.0] - 2026-04-01
 
 ### Added
