@@ -11,6 +11,9 @@ int action_isolinux(OA_Context *ctx) {
     if (!pathLiveFs) pathLiveFs = cJSON_GetObjectItemCaseSensitive(ctx->root, "pathLiveFs");
     if (!cJSON_IsString(pathLiveFs)) return 1;
 
+    cJSON *bootloaders_path = cJSON_GetObjectItemCaseSensitive(ctx->task, "bootloaders_path");
+    if (!bootloaders_path) bootloaders_path = cJSON_GetObjectItemCaseSensitive(ctx->root, "bootloaders_path");
+
     char isolinux_dir[PATH_SAFE];
     snprintf(isolinux_dir, PATH_SAFE, "%s/iso/isolinux", pathLiveFs->valuestring);
 
@@ -19,14 +22,23 @@ int action_isolinux(OA_Context *ctx) {
     system(cmd);
 
     printf("\033[1;34m[oa ISOLINUX]\033[0m Populating BIOS bootloader binaries...\n");
-    snprintf(cmd, sizeof(cmd), "cp /usr/lib/ISOLINUX/isolinux.bin %s/ && "
-                               "cp /usr/lib/syslinux/modules/bios/*.c32 %s/", 
-             isolinux_dir, isolinux_dir);
+
+    // 1. Logica di copia dinamica
+    if (cJSON_IsString(bootloaders_path) && strlen(bootloaders_path->valuestring) > 0) {
+        snprintf(cmd, sizeof(cmd), "cp %s/isolinux.bin %s/ && cp %s/*.c32 %s/ 2>/dev/null || true", 
+                 bootloaders_path->valuestring, isolinux_dir,
+                 bootloaders_path->valuestring, isolinux_dir);
+        printf("\033[1;34m[oa ISOLINUX]\033[0m Using external binaries from: %s\n", bootloaders_path->valuestring);
+    } else {
+        snprintf(cmd, sizeof(cmd), "cp /usr/lib/ISOLINUX/isolinux.bin %s/ && cp /usr/lib/syslinux/modules/bios/*.c32 %s/", 
+                 isolinux_dir, isolinux_dir);
+    }
     system(cmd);
 
-    // Configurazione Isolinux
+    // 2. Configurazione Isolinux di default
     char cfg_path[PATH_SAFE];
     snprintf(cfg_path, PATH_SAFE, "%s/isolinux.cfg", isolinux_dir);
+
     if (access(cfg_path, F_OK) != 0) {
         FILE *f = fopen(cfg_path, "w");
         if (f) {

@@ -2,6 +2,7 @@
   "pathLiveFs": "/home/eggs",
   "mode": "crypted",
   "initrd_cmd": "mkinitramfs -d /home/eggs/liveroot/etc/initramfs-tools -o {{out}} {{ver}}",
+  "bootloaders_path": "",
   "plan": [
     {
       "command": "action_prepare"

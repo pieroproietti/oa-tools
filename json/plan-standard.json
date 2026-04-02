@@ -2,6 +2,7 @@
   "pathLiveFs": "/home/eggs",
   "mode": "standard",
   "initrd_cmd": "mkinitramfs -o {{out}} {{ver}}",
+  "bootloaders_path": "",
   "users": [
     {
       "login": "live",
@@ -41,11 +42,6 @@
     {
       "command": "action_uefi"
     },
-    {
-      "command": "action_suspend",
-      "message": "open another terminal to check chroot"
-    },
-    
     {
       "command": "action_squash"
     },

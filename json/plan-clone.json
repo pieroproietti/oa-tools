@@ -2,6 +2,7 @@
   "pathLiveFs": "/home/eggs",
   "mode": "clone",
   "initrd_cmd": "mkinitramfs -o {{out}} {{ver}}",
+  "bootloaders_path": "",
   "plan": [
     {
       "command": "action_prepare"
