@@ -11,8 +11,11 @@ COA_BIN = $(COA_DIR)/coa
 all: build_oa build_coa
 	@echo "--------------------------------------"
 	@echo "Hatching completed successfully! 🐣"
-	@echo "Workhorse (C):  ./$(OA_BIN)"
-	@echo "Brain (Go):   ./$(COA_BIN)"
+	@echo "coa Brain (Go):   ./$(COA_BIN)"
+	@echo "oa Workhorse (C): ./$(OA_BIN)"
+	@echo "Can be usefull to create symlinks:"
+	@echo "sudo ln -sf "$(pwd)/oa/oa" /usr/local/bin/oa"
+	@echo "sudo ln -sf "$(pwd)/coa/coa" /usr/local/bin/coa"
 	@echo "--------------------------------------"
 
 build_oa:

@@ -1,1 +1,2 @@
+echo "  MAKING coa (the Mind)..."
 go build -o coa ./src/*.go
