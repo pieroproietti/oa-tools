@@ -14,8 +14,8 @@ all: build_oa build_coa
 	@echo "coa Brain (Go):   ./$(COA_BIN)"
 	@echo "oa Workhorse (C): ./$(OA_BIN)"
 	@echo "Can be usefull to create symlinks:"
-	@echo "sudo ln -sf "$(pwd)/oa/oa" /usr/local/bin/oa"
-	@echo "sudo ln -sf "$(pwd)/coa/coa" /usr/local/bin/coa"
+	@echo "sudo ln -sf $(CURDIR)/oa/oa /usr/local/bin/oa"
+	echo "sudo ln -sf $(CURDIR)/coa/coa /usr/local/bin/coa"
 	@echo "--------------------------------------"
 
 build_oa:
