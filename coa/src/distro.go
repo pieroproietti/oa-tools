@@ -1,3 +1,7 @@
+// Copyright 2026 Piero Proietti <piero.proietti@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
 package main
 
 import (
@@ -98,7 +102,7 @@ func resolveDerivative(distroID string, codenameID string) (bool, *Distro) {
 // NewDistro inizializza e riconosce la Distro
 func NewDistro() *Distro {
 	osInfo := parseOsRelease()
-	
+
 	// Valori grezzi letti dal sistema
 	rawID := osInfo["ID"]
 	rawCodename := osInfo["VERSION_CODENAME"]
@@ -107,7 +111,7 @@ func NewDistro() *Distro {
 	// 1. Check rapido per le "Madri" (le distribuzioni pure)
 	// Qui potremmo aggiungere logica per identificare direttamente Debian, Arch, Fedora, ecc.
 	idLower := strings.ToLower(rawID)
-	
+
 	d := &Distro{
 		DistroID:   rawID,
 		CodenameID: rawCodename,

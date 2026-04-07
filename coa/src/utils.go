@@ -1,3 +1,7 @@
+// Copyright 2026 Piero Proietti <piero.proietti@gmail.com>.
+// All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
 package main
 
 import (
@@ -26,7 +30,7 @@ func EnsureBootloaders() (string, error) {
 	}
 
 	fmt.Printf("\033[1;33m[coa]\033[0m Bootloaders non trovati. Inizio download...\n")
-	
+
 	// 2. Download [cite: 38]
 	resp, err := http.Get(BootloaderURL)
 	if err != nil {
@@ -43,24 +47,30 @@ func EnsureBootloaders() (string, error) {
 		return "", err
 	}
 
-	return targetDir, nil 
+	return targetDir, nil
 }
 
 func extractTarGz(r io.Reader, dest string) error {
 	gzr, err := gzip.NewReader(r)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer gzr.Close()
 
 	tr := tar.NewReader(gzr)
 	for {
 		header, err := tr.Next()
-		if err == io.EOF { break }
-		if err != nil { return err }
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
 
 		// --- LOGICA DI APPIATTIMENTO ROBUSTA ---
 		cleanPath := filepath.Clean(header.Name)
 		parts := strings.Split(cleanPath, string(filepath.Separator))
-		
+
 		// Saltiamo sempre il primo livello (es. "bootloaders/")
 		var relPath string
 		if len(parts) > 1 {
