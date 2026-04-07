@@ -54,8 +54,11 @@ int execute_verb(cJSON *root, cJSON *task) {
     else if (strcmp(cmd_name, "action_run") == 0)      status = action_run(&ctx);
     else if (strcmp(cmd_name, "action_scan") == 0)     status = action_scan(&ctx);
     else if (strcmp(cmd_name, "action_squash") == 0)   status = action_squash(&ctx);
-    else if (strcmp(cmd_name, "action_uefi") == 0)     status = action_uefi(&ctx);    
+    else if (strcmp(cmd_name, "action_uefi") == 0)     status = action_uefi(&ctx); 
     else if (strcmp(cmd_name, "action_users") == 0)    status = action_users(&ctx);
+    else if (strcmp(cmd_name, "action_partition") == 0) status = action_partition(&ctx);
+    else if (strcmp(cmd_name, "action_format_ext4") == 0) status = action_format_ext4(&ctx);
+    else if (strcmp(cmd_name, "action_unpack") == 0)   status = action_unpack(&ctx);
     else {
         LOG_ERR("Unknown command requested: %s", cmd_name);
         fprintf(stderr, "Error: Unknown command '%s'\n", cmd_name);
@@ -132,4 +135,4 @@ int main(int argc, char *argv[]) {
     free(json_data);
     oa_close_log();
     return final_status;
-}   
+}

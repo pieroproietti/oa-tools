@@ -60,4 +60,10 @@ typedef struct {
 #include "action_suspend.h"
 #include "action_uefi.h"
 #include "action_users.h"
+
+// Nuovi moduli di installazione (Krill)
+#include "action_partition.h"
+#include "action_format_ext4.h"
+#include "action_users.h"
+
 #endif
