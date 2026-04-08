@@ -15,8 +15,9 @@
 > — *Giuseppe Ungaretti*
 >
 > ---
-> **You cannot destroy millennial civilizations like Persia and Lebanon, or sovereign nations like Ukraine, in the name of a movement that is little more than a century old and rooted in racism. STOP THE MASSACRE.**
-
+Millennial civilizations and sovereign nations are being razed to the ground by the same logic of dominance that has stained human history for centuries. From the Middle East to Ukraine, we are witnessing the destruction of our common heritage. No modern ideology or national interest can justify these crimes. 
+> 
+> **Silence is complicity. Stop the massacre.**
 
 # oa-tools - The Next Generation Remastering Suite 🐧
 
