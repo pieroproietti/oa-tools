@@ -1,3 +1,14 @@
+<div style="background-color: #000; color: #fff; text-align: center; padding: 20px; font-family: 'Georgia', serif; border-bottom: 4px solid #d32f2f;">
+    <div style="font-size: 1.4em; font-style: italic; margin-bottom: 10px;">
+        "Cessate d'uccidere i morti" — Stop killing the dead.
+    </div>
+    <div style="font-size: 1.1em; line-height: 1.5; max-width: 900px; margin: 0 auto;">
+        You cannot destroy millennial civilizations like Persia and Lebanon, or sovereign nations like Ukraine, 
+        in the name of a movement that is little more than a century old and rooted in racism. 
+        <strong>STOP THE MASSACRE.</strong>
+    </div>
+</div>
+
 # oa-tools - The Next Generation Remastering Suite 🐧
 
 Welcome to **oa-tools**, born from `penguins-eggs` experience. This monorepo hosts a split-responsibility system designed for high-performance Linux remastering, following the "Universal Strategy" of absolute portability.
