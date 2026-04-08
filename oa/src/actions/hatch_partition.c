@@ -1,8 +1,12 @@
-#include "../../include/oa.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+/*
+ * src/actions/hatch_uefi.c
+ * Remastering core: GRUB installation on physical hardware (Krill)
+ * oa: eggs in my dialect🥚🥚
+ *
+ * Author: Piero Proietti <piero.proietti@gmail.com>
+ * License: GPL-3.0-or-later
+ */
+#include "oa.h"
 
 int hatch_partition(OA_Context *ctx) {
     // Leggiamo il JSON direttamente dal contesto (ctx->task)

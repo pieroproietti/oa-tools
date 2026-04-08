@@ -1,3 +1,11 @@
+/*
+ * src/actions/hatch_uefi.c
+ * Remastering core: GRUB installation on physical hardware (Krill)
+ * oa: eggs in my dialect🥚🥚
+ *
+ * Author: Piero Proietti <piero.proietti@gmail.com>
+ * License: GPL-3.0-or-later
+ */
 #include "oa.h"
 
 // Ricicliamo la logica per ottenere le partizioni (già vista in unpack/format)

@@ -1,5 +1,14 @@
-#define _XOPEN_SOURCE 500 
+/*
+ * src/actions/hatch_uefi.c
+ * Remastering core: GRUB installation on physical hardware (Krill)
+ * oa: eggs in my dialect🥚🥚
+ *
+ * Author: Piero Proietti <piero.proietti@gmail.com>
+ * License: GPL-3.0-or-later
+ */
 #include "oa.h"
+#define _XOPEN_SOURCE 500 
+
 
 // Variabili globali per il conteggio [cite: 181]
 static uint64_t current_total_bytes = 0;

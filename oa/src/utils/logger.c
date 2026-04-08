@@ -5,8 +5,6 @@
 #include "oa.h"
 #include <stdarg.h>
 #include <time.h>
-#include <stdio.h>
-#include <string.h>
 
 static FILE *log_file = NULL;
 

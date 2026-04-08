@@ -1,14 +1,13 @@
 /*
-* oa: remastering core
-*
-* Author: Piero Proietti <piero.proietti@gmail.com>
-* License: GPL-3.0-or-later
-*/
+ * src/actions/hatch_uefi.c
+ * Remastering core: GRUB installation on physical hardware (Krill)
+ * oa: eggs in my dialect🥚🥚
+ *
+ * Author: Piero Proietti <piero.proietti@gmail.com>
+ * License: GPL-3.0-or-later
+ */
 #include "oa.h"
 #include <mntent.h>
-#include <sys/mount.h>
-#include <stdlib.h>
-#include <string.h>
 
 typedef struct {
     char path[PATH_SAFE];
