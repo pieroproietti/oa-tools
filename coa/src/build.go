@@ -5,9 +5,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+
+	_ "embed" // L'underscore è fondamentale qui!
 )
 
-const ToolVersion = "0.5.1" // Sincronizzato con oa
+//go:embed VERSION
+var rawVersion string
+
+// Puliamo eventuali ritorni a capo (se premi Invio nel file di testo)
+var AppVersion = strings.TrimSpace(rawVersion)
 
 // getProjectPaths auto-rileva le directory corrette a prescindere da dove chiami 'coa'
 func getProjectPaths() (string, string, string) {
@@ -31,7 +38,7 @@ func handleBuild(d *Distro) {
 	// 1. Compilazione del motore C (oa)
 	fmt.Println("\033[1;34m[build]\033[0m Compiling 'oa' C engine...")
 	// makeCmd := exec.Command("make", "-C", oaDir, "clean", "all")
-	makeCmd := exec.Command("make", "-C", oaDir, fmt.Sprintf("VERSION=%s", ToolVersion), "clean", "all")
+	makeCmd := exec.Command("make", "-C", oaDir, fmt.Sprintf("VERSION=%s", AppVersion), "clean", "all")
 	makeCmd.Stdout = os.Stdout
 	makeCmd.Stderr = os.Stderr
 	if err := makeCmd.Run(); err != nil {
@@ -74,7 +81,7 @@ func handleBuild(d *Distro) {
 }
 
 func buildDebianPackage(projRoot, oaDir, coaDir string) {
-	pkgName := fmt.Sprintf("oa-tools_%s_amd64", ToolVersion)
+	pkgName := fmt.Sprintf("oa-tools_%s_amd64", AppVersion)
 	buildDir := filepath.Join("/tmp", pkgName)
 
 	// Struttura cartelle
@@ -115,7 +122,7 @@ Maintainer: Piero Proietti <piero.proietti@gmail.com>
 Depends: squashfs-tools, xorriso
 Description: The Artisan Orchestrator and Engine for Linux remastering.
  Mind and Body philosophy: coa (Go) and oa (C).
-`, ToolVersion)
+`, AppVersion)
 
 	os.WriteFile(filepath.Join(buildDir, "DEBIAN", "control"), []byte(controlContent), 0644)
 
@@ -158,7 +165,7 @@ package() {
     install -Dm644 "${srcdir}/coa/docs/completion/coa.zsh" "${pkgdir}/usr/share/zsh/vendor-completions/_coa"
     install -Dm644 "${srcdir}/coa/docs/completion/coa.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/coa.fish"
 }
-`, ToolVersion)
+`, AppVersion)
 
 	os.WriteFile(filepath.Join(projRoot, "PKGBUILD"), []byte(pkgbuildContent), 0644)
 	fmt.Printf("\033[1;32m[SUCCESS]\033[0m \033[1mPKGBUILD\033[0m generated in the project root.\n")

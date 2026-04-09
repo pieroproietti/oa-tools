@@ -27,6 +27,22 @@ func isUEFI() bool {
 	return false
 }
 
+// getSquashfsPath cerca dinamicamente l'immagine pristine in base a come la distro ha montato la Live
+func getSquashfsPath() string {
+	paths := []string{
+		"/run/live/medium/live/filesystem.squashfs",       // Standard Debian Live attuale
+		"/lib/live/mount/medium/live/filesystem.squashfs", // Standard Debian Live vecchi
+		"/home/eggs/iso/live/filesystem.squashfs",         // Fallback per test locali
+	}
+
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return ""
+}
+
 // getRootDisk individua il disco fisico su cui sta girando il sistema attuale
 func getRootDisk() string {
 	cmd := "lsblk -n -o PKNAME $(findmnt -n -v -o SOURCE /) | head -n 1"
@@ -168,8 +184,17 @@ func handleKrill() {
 func generateInstallPlan(ans *KrillAnswers, disk string) {
 	fmt.Println("\n\033[1;34m[krill]\033[0m Compiling JSON flight plan for the C engine...")
 
+	// 1. Cerchiamo subito l'immagine immacolata prima di fare danni
+	squashPath := getSquashfsPath()
+	if squashPath == "" {
+		fmt.Printf("\033[1;31m[ERROR]\033[0m Could not locate pristine filesystem.squashfs on this live system!\n")
+		return
+	}
+	fmt.Printf("\033[1;34m[krill]\033[0m Pristine image located at: %s\n", squashPath)
+
 	hashedPass := generateHashedPassword(ans.Password)
 
+	// INIZIALIZZAZIONE STRUTTURA DEL PIANO DI VOLO
 	plan := FlightPlan{
 		PathLiveFs: "/mnt/krill-target",
 		Mode:       "install",
@@ -181,6 +206,7 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 		},
 	}
 
+	// BIVIO LUKS / FORMAT STANDARD
 	if ans.UseLuks {
 		plan.Plan = append(plan.Plan, Action{
 			Command:         "hatch_format_luks", 
@@ -194,9 +220,13 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 		})
 	}
 
-	// Il cuore della schiusa: spacchettiamo, fstab, setup sistema e base
+	// Il cuore della schiusa: spacchettiamo passando il parametro a C
 	plan.Plan = append(plan.Plan,
-		Action{Command: "hatch_unpack", RunCommand: disk},
+		Action{
+			Command:    "hatch_unpack", 
+			RunCommand: disk,
+			Args:       []string{squashPath}, // <--- IL BRACCIO RICEVE L'ORDINE QUI
+		},
 		Action{Command: "hatch_fstab", RunCommand: disk},
 		Action{
 			Command:    "sys_run",

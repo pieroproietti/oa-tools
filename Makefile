@@ -1,6 +1,9 @@
 # artisan/Makefile
-# Fallback se non viene passata da coa
-VERSION ?= 0.0.0-dev
+
+# 1. THE SINGLE SOURCE OF TRUTH
+# Legge la versione dinamicamente dal file di testo dell'orchestratore Go.
+# Se il file è assente, usa la versione di sviluppo in modo sicuro.
+VERSION := $(shell cat coa/src/VERSION 2>/dev/null || echo "0.0.0-dev")
 
 # Directories
 OA_DIR = oa
@@ -13,6 +16,7 @@ COA_BIN = $(COA_DIR)/coa
 all: build_oa build_coa
 	@echo "--------------------------------------"
 	@echo "Hatching completed successfully! 🐣"
+	@echo "Version:          $(VERSION)"
 	@echo "coa Brain (Go):   ./$(COA_BIN)"
 	@echo "oa Workhorse (C): ./$(OA_BIN)"
 	@echo "--------------------------------------"

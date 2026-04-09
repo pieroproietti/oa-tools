@@ -86,12 +86,11 @@ func main() {
 		},
 	}
 
-	// --- VERSION COMMAND ---
 	var versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of coa",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("coa v0.5.1 - The Mind of remaster\n")
+			fmt.Printf("coa v%s - The Mind of remaster\n", AppVersion)
 		},
 	}
 
@@ -114,8 +113,18 @@ func main() {
 		},
 	}
 
-    // Assicurati di aggiungere buildCmd alla riga rootCmd.AddCommand in fondo al file:
-	rootCmd.AddCommand(produceCmd, exportCmd, killCmd, detectCmd, adaptCmd, versionCmd, docsCmd, krillCmd, buildCmd)
+	// Assicurati di aggiungere buildCmd alla riga rootCmd.AddCommand in fondo al file:
+	rootCmd.AddCommand(
+		adaptCmd,
+		buildCmd,
+		detectCmd,
+		docsCmd,
+		exportCmd,
+		killCmd,
+		krillCmd,
+		produceCmd,
+		versionCmd,
+	)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)

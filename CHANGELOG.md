@@ -1,5 +1,24 @@
 # Changelog - oa-tools
 
+## [0.6.0] - 2026-04-09
+
+### 🚀 Added
+- **Universal Agnostic Partitioning**: The C engine now always initializes target disks with a 3-partition GPT table (`BIOSBOOT`, `EFI`, `ROOT`), ensuring universal compatibility and disk portability regardless of the host firmware.
+- **Legacy BIOS Support**: Implemented the `hatch_bios.c` action to execute `grub-install --target=i386-pc` directly onto the physical disk.
+- **Dynamic Routing (Krill)**: The Go orchestrator dynamically detects the presence of `/sys/firmware/efi` and injects the correct bootloader installation action (`hatch_uefi` or `hatch_bios`) into the JSON flight plan.
+- **Dynamic Squashfs Detection**: The orchestrator (The Mind) automatically locates the pristine `filesystem.squashfs` image based on standard live distro mount points (e.g., `/run/live/medium/...`) and passes the exact path to the C engine.
+
+### 🛠 Changed
+- **Pristine Install Architecture (Unpack)**: Replaced `rsync` with `unsquashfs` in `hatch_unpack.c`. The installer no longer clones the actively running (and potentially polluted) Live system, but extracts the pure factory image for a clean, pristine installation.
+- **Unpack Progress Bar**: Restored the standard output of `unsquashfs` during the hatch phase to display the native progress bar to the user.
+- **EFI Image Size**: Increased the `efi.img` file size for hybrid ISO generation from 4MB to 10MB to safely accommodate larger modern bootloaders.
+- **FAT16 Compliance**: Forced the EFI image for hybrid boot into the `-F 16` format to satisfy strict validation checks by modern UEFI firmwares (such as OVMF on Proxmox).
+
+### 🐛 Fixed
+- **Hybrid ISO Boot**: Fixed UEFI boot failures on the generated ISO. Added the `-append_partition 2 0xef` flag to `xorriso` to physically inject the EFI partition into the ISO's GPT table, making it universally bootable as both a CD-ROM and a USB drive (Raw Disk).
+- **Removable Media Fallback**: Corrected the UEFI bootloader path inside the ISO to strictly comply with the removable media standard (`/EFI/BOOT/bootx64.efi`).
+- **Partition Syncing**: Fixed a bug in `hatch_partition.c` where the BIOSBOOT partition (2MB) creation was skipped, which caused an index shift and subsequent formatting failures.
+
 ## [0.5.1] - 2026-04-08
 
 ### [coa] Orchestrator (The Mind)
@@ -39,7 +58,6 @@
 - **Architecture Guide Update**: Added details about the `tmpfs` Anti-Inception shield and dynamic `/home` handling to `docs/ARCHITECTURE.md`.
 - **Actions Reference**: Completely overhauled `docs/ACTIONS.md` to reflect the new C engine modules (added `cleanup`, `crypted`, `scan`, `suspend`).
 - **README and Roadmap**: Cleaned up `README.md`, moved future goals to a dedicated `docs/ROADMAP.md`, and added links to the philosophical architecture.
-
 
 ## [0.2.0] - 2026-04-01
 
