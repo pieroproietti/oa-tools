@@ -1,5 +1,21 @@
 # Changelog - oa-tools
 
+## [0.6.1] - 2026-04-10
+
+### Fixed
+- **Arch Linux Live Boot**: Resolved a critical issue causing Kernel Panic on boot. The ramdisk generation now correctly includes the `archiso` hook.
+- **Initramfs Chroot Enforcement**: Fixed a bug where `mkinitcpio` and `mkinitramfs` were reading host system configurations instead of the target `liveroot` configurations. Commands are now explicitly forced to use `-c` or `-d` flags pointing to the chroot.
+- **Bootloaders Tarball Extraction**: Restored the directory flattening logic (`parts[1:]`) in the `extractTarGz` utility to prevent nested root folders when downloading from GitHub releases.
+- **Engine Logs**: Suppressed false-positive `cp` error outputs (`stderr`) in the C engine (`lay_livestruct.c`) during fallback kernel extraction attempts, resulting in cleaner build logs.
+
+### Changed
+- **Universal Bootloaders Path**: Unified the `BootloadersPath` assignment across all distribution families (Debian, Arch, Fedora, openSUSE). All environments now consistently use the universal `BootloaderRoot` (`/tmp/coa/bootloaders`).
+
+### Packaging
+- **Dependency Fixes (Arch)**: Added `archiso`, `dosfstools`, and `mtools` as mandatory dependencies in the `PKGBUILD` to ensure successful live ISO generation and UEFI support.
+- **Dependency Fixes (Debian)**: Added `dosfstools` and `mtools` to the Debian `control` file. 
+- **Legacy Conflict**: Added an explicit conflict with the `penguins-eggs` package in both Debian and Arch builds to prevent overlap and ensure a clean `oa` ecosystem.
+
 ## [0.6.0] - 2026-04-09
 
 ### 🚀 Added
