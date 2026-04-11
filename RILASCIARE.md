@@ -14,31 +14,39 @@ git tag --list
 # Oppure, per vedere solo l'ultimo in ordine cronologico:
 git describe --tags --abbrev=0
 ```
-*Supponiamo che l'ultimo tag sia `v0.6.2` e che vogliamo rilasciare la `v1.1.0`.*
+*Supponiamo che l'ultimo tag sia `v0.6.3` e che vogliamo rilasciare la nuova `v0.6.4`.*
 
 ## 2. Il "Trucco": Soft Reset
 Usa il comando `reset --soft` puntando all'ultimo tag identificato. 
 Questo comando cancella la cronologia dei commit successivi a quel tag, ma **mantiene intatte tutte le modifiche ai file**. In pratica, rimette tutto il tuo nuovo lavoro in area di stage, pronto per essere committato di nuovo.
 
 ```bash
-git reset --soft v0.6.2
+git reset --soft v0.6.3
 ```
 
 ## 3. Creare il Commit di Release
-Ora hai tutto il lavoro svolto tra la vecchia versione e quella attuale concentrato e pronto. Crea un unico commit solido e descrittivo:
+Ora hai tutto il lavoro svolto tra la vecchia versione e quella attuale concentrato e pronto. Crea un unico commit solido e descrittivo per la nuova versione:
 
 ```bash
-git commit -m "Release v0.6.2: Aggiunto SSH multiplexing per i pacchetti e ottimizzazioni generali"
+git commit -m "Release v0.6.4: first release with clean history"
 ```
 
 ## 4. Creare il Nuovo Tag
-Una volta creato il mega-commit, è il momento di etichettarlo con il numero della nuova release:
+**Prima** di compilare, è fondamentale applicare il nuovo tag. In questo modo i tool di compilazione (che leggono la versione da git) useranno la nomenclatura corretta e pulita.
 
 ```bash
-git tag v0.6.3
+git tag v0.6.4
 ```
 
-## 5. Allineare il Remote (Push)
+## 5. Creare ed esportare i pacchetti
+Ora che il codice è taggato correttamente, lancia la build per generare i pacchetti nativi (Debian e Arch) che verranno poi caricati nella Release:
+
+```bash
+make
+coa/coa build
+```
+
+## 6. Allineare il Remote (Push)
 Poiché abbiamo riscritto la storia del nostro repository locale, GitHub (o il server remoto) rifiuterà un push standard, avvisandoti che le cronologie non combaciano. 
 Dobbiamo imporre la nostra nuova storia pulita sovrascrivendo quella vecchia, usando un push forzato, e poi inviare i nuovi tag.
 
