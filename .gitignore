@@ -9,6 +9,7 @@ oa/obj/
 *.o
 
 # --- Packages & Build Artifacts ---
+pkg/*
 *.deb
 *.rpm
 *.pkg.tar.zst
