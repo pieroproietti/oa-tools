@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -13,33 +14,49 @@ var targetDir string
 // manCmd rappresenta il comando per generare la documentazione
 var manCmd = &cobra.Command{
 	Use:    "man",
-	Short:  "Generates man pages for coa",
-	Hidden: true, // Importante: non serve all'utente finale, ma solo al builder
+	Short:  "Generates man and markdown documentation for coa",
+	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Header standard per le man pages Linux
+
+		// 1. Percorsi di destinazione
+		manPath := filepath.Join(targetDir, "man")
+		mdPath := filepath.Join(targetDir, "md")
+
+		// Creiamo le directory
+		if err := os.MkdirAll(manPath, 0755); err != nil {
+			return err
+		}
+		if err := os.MkdirAll(mdPath, 0755); err != nil {
+			return err
+		}
+
+		// 2. Generazione MAN PAGES
 		header := &doc.GenManHeader{
 			Title:   "COA",
 			Section: "1",
 			Source:  "coa " + AppVersion,
 			Manual:  "coa User Manual",
 		}
-
-		// Assicuriamoci che la cartella di destinazione esista
-		if err := os.MkdirAll(targetDir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
+		fmt.Printf("Generating man pages in %s...\n", manPath)
+		if err := doc.GenManTree(rootCmd, header, manPath); err != nil {
+			return fmt.Errorf("failed to generate man pages: %w", err)
 		}
 
-		fmt.Printf("Generating man pages in %s...\n", targetDir)
+		// 3. Generazione MARKDOWN
+		fmt.Printf("Generating markdown docs in %s...\n", mdPath)
+		if err := doc.GenMarkdownTree(rootCmd, mdPath); err != nil {
+			return fmt.Errorf("failed to generate markdown docs: %w", err)
+		}
 
-		// Passiamo rootCmd per generare le man pages di tutti i sotto-comandi ricorsivamente
-		return doc.GenManTree(rootCmd, header, targetDir)
+		fmt.Println("Documentation generated successfully.")
+		return nil
 	},
 }
 
 func init() {
-	// Definiamo il flag per la directory di output
-	manCmd.Flags().StringVarP(&targetDir, "target", "t", "./docs/man", "Target directory for man pages")
+	// Definiamo il flag per la directory base di output
+	// Di default ora punta a ./docs e creerà ./docs/man e ./docs/md
 
-	// Aggiungiamo il comando al comando radice (rootCmd)
+	manCmd.Flags().StringVarP(&targetDir, "target", "t", "./coa/docs", "Base target directory for documentation")
 	rootCmd.AddCommand(manCmd)
 }
