@@ -1,0 +1,186 @@
+.
+├── CHANGELOG.md
+├── coa
+│   ├── coa
+│   ├── conf
+│   │   ├── derivatives.yaml
+│   │   └── exclude.list
+│   ├── docs
+│   │   ├── completion
+│   │   │   ├── coa.bash
+│   │   │   ├── coa.fish
+│   │   │   └── coa.zsh
+│   │   └── man
+│   │       ├── coa.1
+│   │       ├── coa-adapt.1
+│   │       ├── coa-build.1
+│   │       ├── coa-completion.1
+│   │       ├── coa-completion-bash.1
+│   │       ├── coa-completion-fish.1
+│   │       ├── coa-completion-powershell.1
+│   │       ├── coa-completion-zsh.1
+│   │       ├── coa-detect.1
+│   │       ├── coa-export.1
+│   │       ├── coa-export-iso.1
+│   │       ├── coa-export-pkg.1
+│   │       ├── coa-kill.1
+│   │       ├── coa-krill.1
+│   │       ├── coa-produce.1
+│   │       └── coa-version.1
+│   ├── go.mod
+│   ├── go.sum
+│   ├── m
+│   ├── README.md
+│   └── src
+│       ├── cmd
+│       │   ├── adapt.go
+│       │   ├── build.go
+│       │   ├── detect.go
+│       │   ├── docs.go
+│       │   ├── export.go
+│       │   ├── kill.go
+│       │   ├── krill.go
+│       │   ├── man.go
+│       │   ├── produce.go
+│       │   ├── root.go
+│       │   └── versions.go
+│       ├── internal
+│       │   ├── assets
+│       │   │   └── assets.go
+│       │   ├── builder
+│       │   │   └── build.go
+│       │   ├── distro
+│       │   │   └── distro.go
+│       │   ├── engine
+│       │   │   ├── detect.go
+│       │   │   ├── docs.go
+│       │   │   ├── export.go
+│       │   │   ├── kill_adapt.go
+│       │   │   ├── plan.go
+│       │   │   └── produce.go
+│       │   ├── krill
+│       │   │   └── krill.go
+│       │   └── utils
+│       │       └── bootloader.go
+│       └── main.go
+├── context.sh
+├── DOCS
+│   ├── PLAN.md
+│   ├── REFERENCE
+│   │   ├── ACTIONS.md
+│   │   ├── ARCHITECTURE.md
+│   │   ├── DISTRO_CHALLENGES.md
+│   │   ├── OA_Context.md
+│   │   ├── ROADMAP.md
+│   │   └── UNIVERSAL_STRATEGY.md
+│   └── ROADMAP.md
+├── Makefile
+├── MANIFESTUM.md
+├── oa
+│   ├── c
+│   ├── cleanup
+│   ├── defaults
+│   │   └── eggs.yaml
+│   ├── include
+│   │   ├── cJSON.h
+│   │   ├── hatch_bios.h
+│   │   ├── hatch_format.h
+│   │   ├── hatch_fstab.h
+│   │   ├── hatch_partition.h
+│   │   ├── hatch_uefi.h
+│   │   ├── hatch_unpack.h
+│   │   ├── hatch_users.h
+│   │   ├── helpers.h
+│   │   ├── lay_cleanup.h
+│   │   ├── lay_crypted.h
+│   │   ├── lay_initrd.h
+│   │   ├── lay_iso.h
+│   │   ├── lay_isolinux.h
+│   │   ├── lay_livestruct.h
+│   │   ├── lay_prepare.h
+│   │   ├── lay_squash.h
+│   │   ├── lay_uefi.h
+│   │   ├── lay_users.h
+│   │   ├── logger.h
+│   │   ├── oa.h
+│   │   ├── oa-yocto.h
+│   │   ├── sys_run.h
+│   │   ├── sys_scan.h
+│   │   └── sys_suspend.h
+│   ├── json
+│   │   ├── plan-clone.json
+│   │   ├── plan-crypted.json
+│   │   └── plan-standard.json
+│   ├── LICENSE
+│   ├── m
+│   ├── Makefile
+│   ├── oa
+│   ├── obj
+│   │   ├── actions
+│   │   │   ├── hatch_bios.o
+│   │   │   ├── hatch_format.o
+│   │   │   ├── hatch_fstab.o
+│   │   │   ├── hatch_partition.o
+│   │   │   ├── hatch_uefi.o
+│   │   │   ├── hatch_unpack.o
+│   │   │   ├── hatch_users.o
+│   │   │   ├── lay_cleanup.o
+│   │   │   ├── lay_crypted.o
+│   │   │   ├── lay_initrd.o
+│   │   │   ├── lay_isolinux.o
+│   │   │   ├── lay_iso.o
+│   │   │   ├── lay_livestruct.o
+│   │   │   ├── lay_prepare.o
+│   │   │   ├── lay_squash.o
+│   │   │   ├── lay_uefi.o
+│   │   │   ├── lay_users.o
+│   │   │   ├── sys_run.o
+│   │   │   ├── sys_scan.o
+│   │   │   └── sys_suspend.o
+│   │   ├── main.o
+│   │   ├── utils
+│   │   │   ├── cJSON.o
+│   │   │   ├── helpers.o
+│   │   │   └── logger.o
+│   │   └── vendors
+│   │       └── oa-yocto.o
+│   ├── README.md
+│   ├── scripts
+│   │   └── bell.sh
+│   └── src
+│       ├── actions
+│       │   ├── hatch_bios.c
+│       │   ├── hatch_format.c
+│       │   ├── hatch_fstab.c
+│       │   ├── hatch_partition.c
+│       │   ├── hatch_uefi.c
+│       │   ├── hatch_unpack.c
+│       │   ├── hatch_users.c
+│       │   ├── lay_cleanup.c
+│       │   ├── lay_crypted.c
+│       │   ├── lay_initrd.c
+│       │   ├── lay_iso.c
+│       │   ├── lay_isolinux.c
+│       │   ├── lay_livestruct.c
+│       │   ├── lay_prepare.c
+│       │   ├── lay_squash.c
+│       │   ├── lay_uefi.c
+│       │   ├── lay_users.c
+│       │   ├── sys_run.c
+│       │   ├── sys_scan.c
+│       │   └── sys_suspend.c
+│       ├── main.c
+│       ├── utils
+│       │   ├── cJSON.c
+│       │   ├── helpers.c
+│       │   └── logger.c
+│       └── vendors
+│           └── oa-yocto.c
+├── oa.log
+├── oa-tools-0.6.2-7-x86_64.pkg.tar.zst
+├── oa-tools-debug-0.6.2-7-x86_64.pkg.tar.zst
+├── PKGBUILD
+├── README.md
+└── tree
+
+30 directories, 154 files

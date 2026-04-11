@@ -1,10 +1,4 @@
 package utils
-// Copyright 2026 Piero Proietti <piero.proietti@gmail.com>.
-// All rights reserved.
-// Use of this source code is governed by a MIT-style
-// license that can be found in the LICENSE file.
-
-package utils
 
 import (
 	"archive/tar"
@@ -15,22 +9,19 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"coa/src/internal/engine" // Importiamo l'engine per accedere a BootloaderRoot
+	// ELIMINATO: "coa/src/internal/engine"
 )
 
 const BootloaderURL = "https://github.com/pieroproietti/penguins-bootloaders/releases/download/v26.1.16/bootloaders.tar.gz"
 
-// EnsureBootloaders verifica la presenza dei bootloader e li scarica se mancano
-func EnsureBootloaders() (string, error) {
-	targetDir := engine.BootloaderRoot
-
+// EnsureBootloaders ora riceve il percorso come argomento
+func EnsureBootloaders(targetDir string) (string, error) {
 	// 1. Controllo se esistono già
 	if _, err := os.Stat(targetDir); err == nil {
 		return targetDir, nil
 	}
 
-	fmt.Printf("\033[1;33m[coa]\033[0m Bootloaders non trovati. Inizio download...\n")
+	fmt.Printf("\033[1;33m[coa]\033[0m Bootloaders non trovati in %s. Inizio download...\n", targetDir)
 
 	// 2. Download
 	resp, err := http.Get(BootloaderURL)

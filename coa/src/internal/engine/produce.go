@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"coa/src/internal/assets"
+	"coa/src/internal/distro"
+	"coa/src/internal/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,11 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"coa/src/internal/distro"
-	// Importa altri pacchetti interni che andremo a creare a breve:
-	// "coa/src/internal/assets"
-	// "coa/src/internal/utils"
 )
 
 // HandleProduce gestisce la creazione della ISO
@@ -21,16 +19,16 @@ func HandleProduce(mode string, workPath string, d *distro.Distro) {
 	fmt.Printf("\033[1;32m[coa]\033[0m Extracting internal configurations to %s...\n", tempConfigPath)
 
 	// TODO: Chiamerà assets.ExtractConfigs(tempConfigPath)
-	// if err := assets.ExtractConfigs(tempConfigPath); err != nil {
-	// 	log.Fatalf("\033[1;31m[coa]\033[0m Asset extraction failed: %v", err)
-	// }
+	if err := assets.ExtractConfigs(tempConfigPath); err != nil {
+		log.Fatalf("\033[1;31m[coa]\033[0m Asset extraction failed: %v", err)
+	}
 
 	fmt.Printf("\033[1;32m[coa]\033[0m Ensuring bootloaders are present...\n")
 
-	// TODO: Chiamerà utils.EnsureBootloaders()
-	// if _, err := utils.EnsureBootloaders(); err != nil {
-	// 	log.Fatalf("\033[1;31m[coa]\033[0m Bootloader retrieval failed: %v", err)
-	// }
+	// Passiamo la costante BootloaderRoot definita in plan.go
+	if _, err := utils.EnsureBootloaders(BootloaderRoot); err != nil {
+		log.Fatalf("\033[1;31m[coa]\033[0m Bootloader retrieval failed: %v", err)
+	}
 
 	fmt.Printf("\033[1;32m[coa]\033[0m Preparing environment...\n")
 

@@ -13,7 +13,7 @@
  */
 static void build_initrd_command(char *dest, const char *tpl, const char *out, const char *ver) {
     char tmp[4096];
-    char *p;
+    const char *p;
 
     // Sostituisce {{out}}
     if ((p = strstr(tpl, "{{out}}"))) {
