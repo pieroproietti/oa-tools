@@ -6,14 +6,31 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // AppVersion deve essere accessibile (possiamo passarla o usare cmd.AppVersion)
 var AppVersion string
 
+// parseGitVersion separa "0.6.2-5-g2504384" in (0.6.2, 5)
+func parseGitVersion(v string) (string, string) {
+	parts := strings.Split(v, "-")
+
+	baseVer := parts[0]
+	relNum := "1" // Default se non ci sono commit extra
+
+	if len(parts) > 1 {
+		relNum = parts[1]
+	}
+
+	return baseVer, relNum
+}
+
 // HandleBuild orchestra la compilazione e la creazione del pacchetto nativo
 func HandleBuild(d *distro.Distro, version string) {
 	AppVersion = version
+	baseVer, relNum := parseGitVersion(version)
+
 	projRoot, oaDir, coaDir := getProjectPaths()
 
 	fmt.Println("\033[1;36m====================================================\033[0m")
@@ -45,15 +62,16 @@ func HandleBuild(d *distro.Distro, version string) {
 
 	// 3. Generazione pacchetto in base alla famiglia
 	if d.FamilyID == "archlinux" {
-		buildArchPackage(projRoot)
+		buildArchPackage(projRoot, baseVer, relNum)
 	} else {
-		// Default a Debian per debian, ubuntu, devuan, ecc.
-		buildDebianPackage(projRoot, oaDir, coaDir)
+		// Debian vuole il formato "versione-release"
+		pkgVersion := fmt.Sprintf("%s-%s", baseVer, relNum)
+		buildDebianPackage(projRoot, oaDir, coaDir, pkgVersion)
 	}
 }
-
-func buildDebianPackage(projRoot, oaDir, coaDir string) {
-	pkgName := fmt.Sprintf("oa-tools_%s_amd64", AppVersion)
+func buildDebianPackage(projRoot, oaDir, coaDir, pkgVersion string) {
+	// pkgVersion qui è già "0.6.2-5"
+	pkgName := fmt.Sprintf("oa-tools_%s_amd64", pkgVersion)
 	buildDir := filepath.Join("/tmp", pkgName)
 
 	os.MkdirAll(filepath.Join(buildDir, "DEBIAN"), 0755)
@@ -111,12 +129,14 @@ Description: coa is the mind and oa the arm
 	fmt.Printf("\033[1;32m[SUCCESS]\033[0m Package created: \033[1m%s\033[0m\n", finalTarget)
 }
 
-func buildArchPackage(projRoot string) {
-	pkgbuildContent := fmt.Sprintf(`# Maintainer: Piero Proietti <piero.proietti@gmail.com>
+func buildArchPackage(projRoot, baseVer, relNum string) {
+	pkgbuildContent := fmt.Sprintf(`# Maintainer: Piero Proietti <piero.proietti@gmail.com> 
 pkgname=oa-tools
 pkgver=%s
-pkgrel=1
-pkgdesc="oa-tools universal Linux remastering"
+pkgrel=%s
+pkgdesc="oa-tools universal Linux remastering" 
+arch=('x86_64')
+license=('GPL3')
 arch=('x86_64')
 license=('GPL3')
 depends=('archiso' 'xorriso' 'squashfs-tools')
