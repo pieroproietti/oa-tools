@@ -2,23 +2,29 @@ package cmd
 
 import (
 	"coa/src/internal/engine"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
+var targetDir string
+
 var docsCmd = &cobra.Command{
-	Use:    "docs",
+	Use:    "_gen_docs",
 	Short:  "Generate man pages, markdown wiki, and completion scripts",
-	Hidden: true, // Lo manteniamo nascosto agli utenti finali
-	Run: func(cmd *cobra.Command, args []string) {
+	Hidden: true, // Completamente invisibile all'utente finale
+	RunE: func(cmd *cobra.Command, args []string) error {
 		CheckSudoRequirements(cmd.Name(), false)
 
-		// Passiamo rootCmd all'engine in modo che Cobra possa analizzare
-		// l'albero di tutti i comandi registrati e generare il manuale.
-		engine.HandleDocs(rootCmd)
+		if err := engine.HandleDocs(rootCmd, targetDir); err != nil {
+			return fmt.Errorf("failed to generate documentation: %w", err)
+		}
+		return nil
 	},
 }
 
 func init() {
+	// Impostiamo un percorso di default comodo per lo sviluppo locale
+	docsCmd.Flags().StringVarP(&targetDir, "target", "t", "./docs", "Base target directory for all documentation types")
 	rootCmd.AddCommand(docsCmd)
 }

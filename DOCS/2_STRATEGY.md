@@ -38,3 +38,4 @@ This strict separation of concerns—a high-level Orchestrator for complex logic
 
 ## Conclusion: Breaking the Distro Barrier
 By combining the **Debian Bootloader Payload**, **Yocto-style Native Identity Management**, **Initramfs Abstraction**, and a **Dynamic Orchestrator**, `oa` achieves true distro-agnosticism. The host system is treated merely as a pool of passive files (projected via OverlayFS). The critical phases—booting the ISO, initializing the kernel, and logging in the live user—are completely managed, allowing flawless remastering of Arch, RHEL, OpenSUSE, Manjaro, and Debian families using the exact same compiled core.
+

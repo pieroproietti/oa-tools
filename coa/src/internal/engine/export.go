@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 )
 
 const (
@@ -88,12 +87,12 @@ func HandleExportIso(clean bool) {
 }
 
 // HandleExportPkg esporta i pacchetti nativi (DEB o Arch)
-// HandleExportPkg esporta i pacchetti nativi (DEB o Arch)
 func HandleExportPkg(clean bool) {
 	fmt.Println("\033[1;34m[PROCESS]\033[0m Searching for native packages...")
 
-	debFiles, _ := filepath.Glob("*.deb")
-	archFiles, _ := filepath.Glob("*.pkg.tar.zst")
+	// 1. Cerchiamo SOLO i pacchetti generati da noi
+	debFiles, _ := filepath.Glob("oa-tools*.deb")
+	archFiles, _ := filepath.Glob("oa-tools*.pkg.tar.zst")
 	var allPackages []string
 	allPackages = append(append(allPackages, debFiles...), archFiles...)
 
@@ -101,13 +100,6 @@ func HandleExportPkg(clean bool) {
 		fmt.Println("\033[1;31m[ERROR]\033[0m No native packages found.")
 		return
 	}
-
-	sort.Slice(allPackages, func(i, j int) bool {
-		infoI, _ := os.Stat(allPackages[i])
-		infoJ, _ := os.Stat(allPackages[j])
-		return infoI.ModTime().Before(infoJ.ModTime())
-	})
-	latestPkg := allPackages[len(allPackages)-1]
 
 	// --- INIZIO SETUP SSH MULTIPLEXING ---
 	socketPath := "/tmp/coa-ssh-mux-pkg"
@@ -125,8 +117,18 @@ func HandleExportPkg(clean bool) {
 	// --- FINE SETUP ---
 
 	if clean {
-		fmt.Printf("\033[1;33m[CLEAN]\033[0m Removing old packages on %s...\n", remoteUserHost)
-		cleanCmdStr := "rm -f " + remotePkgPath + "*.deb " + remotePkgPath + "*.pkg.tar.zst"
+		fmt.Printf("\033[1;33m[CLEAN]\033[0m Removing old oa-tools packages on %s...\n", remoteUserHost)
+
+		// 2. Costruiamo il target di pulizia in modo DINAMICO
+		var rmTargets string
+		if len(debFiles) > 0 {
+			rmTargets += remotePkgPath + "oa-tools*.deb "
+		}
+		if len(archFiles) > 0 {
+			rmTargets += remotePkgPath + "oa-tools*.pkg.tar.zst "
+		}
+
+		cleanCmdStr := "rm -f " + rmTargets
 		sshArgs := append(muxArgs, remoteUserHost, cleanCmdStr)
 
 		cleanCmd := exec.Command("ssh", sshArgs...)
@@ -140,18 +142,25 @@ func HandleExportPkg(clean bool) {
 		}
 	}
 
-	fmt.Printf("\033[1;34m[COPY]\033[0m Sending \033[1m%s\033[0m to Proxmox...\n", latestPkg)
+	// 3. Iteriamo su tutti i pacchetti trovati per inviarli (utile per Arch che ha main + debug)
+	for i, pkg := range allPackages {
+		fmt.Printf("\033[1;34m[COPY]\033[0m Sending \033[1m%s\033[0m to Proxmox...\n", pkg)
 
-	dstStr := fmt.Sprintf("%s:%s", remoteUserHost, remotePkgPath)
-	scpArgs := append(muxArgs, latestPkg, dstStr)
+		dstStr := fmt.Sprintf("%s:%s", remoteUserHost, remotePkgPath)
+		scpArgs := append(muxArgs, pkg, dstStr)
 
-	scpCmd := exec.Command("scp", scpArgs...)
-	// Passiamo lo Stdin: se clean=false, sarà questo comando a chiedere la password per primo
-	scpCmd.Stdout, scpCmd.Stderr, scpCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
+		scpCmd := exec.Command("scp", scpArgs...)
+		// Passiamo lo Stdin solo al primo file, così se clean=false chiede la password una volta sola
+		if i == 0 {
+			scpCmd.Stdout, scpCmd.Stderr, scpCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
+		} else {
+			scpCmd.Stdout, scpCmd.Stderr = os.Stdout, os.Stderr
+		}
 
-	if err := scpCmd.Run(); err != nil {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m SCP transfer failed: %v\n", err)
-		return
+		if err := scpCmd.Run(); err != nil {
+			fmt.Printf("\033[1;31m[ERROR]\033[0m SCP transfer failed for %s: %v\n", pkg, err)
+		} else {
+			fmt.Printf("\033[1;32m[SUCCESS]\033[0m %s successfully exported to Proxmox.\n", pkg)
+		}
 	}
-	fmt.Printf("\033[1;32m[SUCCESS]\033[0m %s successfully exported to Proxmox.\n", latestPkg)
 }

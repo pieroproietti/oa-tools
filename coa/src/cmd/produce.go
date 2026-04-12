@@ -15,14 +15,24 @@ var (
 var produceCmd = &cobra.Command{
 	Use:   "produce",
 	Short: "Start a system remastering production flight",
+	Long: `The 'produce' command is the core of the remastering process. 
+It orchestrates the creation of a bootable live ISO using OverlayFS for a zero-copy approach.
+
+Supported modes:
+  - standard: Creates a fresh live system (purging host user identities).
+  - clone: Preserves the host's /home directory and user identities.
+  - crypted: Encapsulates the root filesystem inside a LUKS2 container.`,
+	Example: `  # Start a standard ISO production in the default /home/eggs nest
+  sudo coa produce
+
+  # Start a clone production in a custom path
+  sudo coa produce --mode clone --path /mnt/storage/workspace
+
+  # Start an encrypted live production
+  sudo coa produce --mode crypted`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Richiede i privilegi di root
 		CheckSudoRequirements(cmd.Name(), true)
-
-		// Rileva la distribuzione host
 		myDistro := distro.NewDistro()
-
-		// Delega l'esecuzione al motore interno
 		engine.HandleProduce(produceMode, producePath, myDistro)
 	},
 }

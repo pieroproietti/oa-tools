@@ -12,8 +12,11 @@ var AppVersion = "dev"
 
 var rootCmd = &cobra.Command{
 	Use:   "coa",
-	Short: "coa (coa) - The Artisan Orchestrator",
-	Long:  "coa is the intelligent orchestrator written in Go, designed to be the \"Mind\" behind the GNU/Linux system remastering process.",
+	Short: "coa (brooding in my dialect) - The Mind orchestrator",
+	Long:  "coa is the orchestrator written in Go, designed to be the \"Mind\" behind the GNU/Linux system remastering process.",
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 }
 
 // Execute viene chiamato dal main.go per avviare il parsing della CLI

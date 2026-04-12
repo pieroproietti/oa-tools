@@ -71,6 +71,7 @@ FILES_COA=(
     coa/src/cmd/*.go
     coa/src/internal/**/*.go
     coa/src/internal/assets/assets/**/*
+    coa/src/middleware/**/*.go
     coa/conf/*.yaml 
 )
 

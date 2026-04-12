@@ -27,33 +27,19 @@ func parseGitVersion(v string) (string, string) {
 }
 
 func generateDocs(coaDir string) error {
-	// Definiamo i percorsi di output dentro il progetto
+	// Definiamo unicamente la root della documentazione
 	docPath := filepath.Join(coaDir, "docs")
-	manPath := filepath.Join(docPath, "man")
-	compPath := filepath.Join(docPath, "completion")
 
-	// Creiamo le directory se non esistono
-	os.MkdirAll(manPath, 0755)
-	os.MkdirAll(compPath, 0755)
+	fmt.Printf("  -> Triggering internal _gen_docs to %s...\n", docPath)
 
-	// Eseguiamo il binario coa appena compilato per generare i documenti
-	// Nota: Assicurati che coa abbia un comando 'coa _gen_docs' o simile
-	genCmd := exec.Command("./coa", "man", "--target", manPath)
+	// Eseguiamo il binario coa chiamando il comando nascosto unificato
+	genCmd := exec.Command("./coa", "_gen_docs", "--target", docPath)
 	genCmd.Dir = coaDir
-	if err := genCmd.Run(); err != nil {
-		return fmt.Errorf("failed to generate man pages: %w", err)
-	}
+	genCmd.Stdout = os.Stdout
+	genCmd.Stderr = os.Stderr // Utile per vedere se Cobra si lamenta di qualcosa
 
-	// Generazione completamenti (Bash, Zsh, Fish)
-	shells := []string{"bash", "zsh", "fish"}
-	for _, shell := range shells {
-		targetFile := filepath.Join(compPath, "coa."+shell)
-		compCmd := exec.Command("./coa", "completion", shell)
-		compCmd.Dir = coaDir
-		output, err := compCmd.Output()
-		if err == nil {
-			os.WriteFile(targetFile, output, 0644)
-		}
+	if err := genCmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate docs: %w", err)
 	}
 
 	return nil

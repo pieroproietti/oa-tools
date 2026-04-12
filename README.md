@@ -46,18 +46,9 @@ It manages the full lifecycle: from laying the ISO to the final installation.
 The name derives from the dialect word coa, referring to the act of brooding or incubating eggs until they are ready to hatch.
 
 **Language: Go**
-Actual commands
-- adapt       Adapt monitor resolution for VMs
-- build       Compile binaries and generate native distribution packages (.deb, PKGBUILD)
-- completion  Generate the autocompletion script for the specified shell
-- detect      Show host distribution discovery info
-- export      Export artifacts (iso, pkg) to a remote Proxmox storage
-- help        Help about any command
-- kill        Free the nest and unmount filesystems
-- krill       Start the system installation (The Hatching)
-- produce     Start a system remastering production flight
-- version     Print the version number of coa
----
+
+For coa commands, see [coa command Reference](/coa/docs/md/README.md).
+
 
 ## 🚀 Getting Started
 
@@ -85,6 +76,8 @@ coa/coa build
 
 ## 📜 Philosophy
 The **oa-tools** project aims to provide a "Passepartout" for Linux remastering. By separating the **Mind** (Go) from the **Workhorse** (C), we achieve a clean, maintainable, and incredibly fast workflow that can adapt to any distribution without changing the user experience.
+
+Documentation can be found on [DOCS](/DOCS/).
 
 ---
 *Created with passion by Piero Proietti.*

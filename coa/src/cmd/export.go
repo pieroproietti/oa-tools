@@ -9,9 +9,10 @@ import (
 var cleanExport bool
 
 var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export artifacts (iso, pkg) to a remote Proxmox storage",
-	Long:  "Export generated ISOs or native packages to a remote server via SCP.",
+	Use:    "export",
+	Short:  "Export artifacts (iso, pkg) to a remote Proxmox storage",
+	Long:   "Export generated ISOs or native packages to a remote server via SCP.",
+	Hidden: false, // Sparisce da coa --help, ma continua a funzionare!
 }
 
 var exportIsoCmd = &cobra.Command{

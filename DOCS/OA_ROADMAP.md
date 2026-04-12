@@ -15,7 +15,3 @@ This document tracks the completed milestones and the upcoming goals for the **o
 - [x] **SECURE BOOT**: For now we must disable SECURE_BOOT.
 - [ ] **Advanced Initramfs Handling**: Extend `action_initrd` to seamlessly tame `dracut` (Fedora/SUSE) and `mkinitcpio` (Arch Linux).
 - [ ] **Filesystem Scanning Engine**: Refine `action_scan` and `action_squash` to support dynamic, external exclusion lists effectively.
-
-## 🔮 Future Vision
-- [ ] **Chroot Hooks**: Implementation of native hooks for deep chroot customization right before the final SquashFS compression.
-- [ ] **penguins-eggs Integration**: Direct integration into `penguins-eggs` as the primary, native C analysis and remastering engine, replacing the legacy bash logic.
