@@ -155,7 +155,8 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 		engine.Action{Command: "oa_install_fstab", RunCommand: disk},
 		engine.Action{
 			Command:    "oa_sys_run",
-			RunCommand: "systemd-machine-id-setup",
+			RunCommand: "sh",
+			Args:       []string{"-c", "rm -f /etc/machine-id && touch /etc/machine-id"},
 		},
 		engine.Action{
 			Command:    "oa_sys_run",
@@ -163,7 +164,7 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 			Args:       []string{"-c", "echo " + ans.Hostname + " > /etc/hostname"},
 		},
 		engine.Action{Command: "oa_install_users"},
-		engine.Action{Command: "oa_remaster_initrd"},
+		engine.Action{Command: "oa_install_initrd"},
 	)
 
 	if isUEFI() {
@@ -215,10 +216,17 @@ func isUEFI() bool {
 	return false
 }
 
+// getSquashfsPath
 func getSquashfsPath() string {
 	paths := []string{
+		// Percorsi Debian/Ubuntu Live
 		"/run/live/medium/live/filesystem.squashfs",
 		"/lib/live/mount/medium/live/filesystem.squashfs",
+
+		// Percorso Arch Linux (archiso)
+		"/run/archiso/bootmnt/arch/x86_64/airootfs.sfs",
+
+		// Percorso Remastering locale coa/oa
 		"/home/eggs/iso/live/filesystem.squashfs",
 	}
 

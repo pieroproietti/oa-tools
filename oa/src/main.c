@@ -56,6 +56,7 @@ int execute_verb(cJSON *root, cJSON *task) {
     else if (strcmp(cmd_name, "oa_install_format") == 0)       status = install_format(&ctx);
     else if (strcmp(cmd_name, "oa_install_unpack") == 0)       status = install_unpack(&ctx);
     else if (strcmp(cmd_name, "oa_install_fstab") == 0)        status = install_fstab(&ctx);
+    else if (strcmp(cmd_name, "oa_install_initrd") == 0)       status = install_initrd(&ctx);
     else if (strcmp(cmd_name, "oa_install_users") == 0)        status = install_users(&ctx);
     else if (strcmp(cmd_name, "oa_install_uefi") == 0)         status = install_uefi(&ctx);
     else if (strcmp(cmd_name, "oa_install_bios") == 0)         status = install_bios(&ctx);

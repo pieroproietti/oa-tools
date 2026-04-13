@@ -28,6 +28,8 @@
 #include "logger.h"
 #include "oa-yocto.h"
 
+#include "helpers.h"
+
 // --- Costanti Globali --
 #define PATH_INPUT PATH_MAX   // 4096 - Per i percorsi che leggiamo
 #define PATH_OUT   8192       // 8K - Per i percorsi che costruiamo
@@ -62,6 +64,7 @@ typedef struct {
 #include "install_unpack.h"
 #include "install_fstab.h"
 #include "install_users.h"
+#include "install_initrd.h"
 #include "install_uefi.h"
 #include "install_bios.h"
 

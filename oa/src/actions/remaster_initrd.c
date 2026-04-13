@@ -9,37 +9,6 @@
 #include "oa.h"
 
 /**
- * @brief Helper locale per sostituire i placeholder nel comando initrd
- */
-static void build_initrd_command(char *dest, const char *tpl, const char *out, const char *ver) {
-    char tmp[4096];
-    const char *p;
-
-    // Sostituisce {{out}}
-    if ((p = strstr(tpl, "{{out}}"))) {
-        size_t len = p - tpl;
-        strncpy(tmp, tpl, len);
-        tmp[len] = '\0';
-        strcat(tmp, out);
-        strcat(tmp, p + 7);
-        tpl = tmp;
-    }
-    // Sostituisce {{ver}}
-    if ((p = strstr(tpl, "{{ver}}"))) {
-        size_t len = p - tpl;
-        char final[4096];
-        strncpy(final, tpl, len);
-        final[len] = '\0';
-        strcat(final, ver);
-        strcat(final, p + 7);
-        strcpy(dest, final);
-    } else {
-        strcpy(dest, tpl);
-    }
-}
-
-
-/**
  * @brief Genera l'initrd (Initial RAM Disk) usando il contesto OA
  */
 int remaster_initrd(OA_Context *ctx) {

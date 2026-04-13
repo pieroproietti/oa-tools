@@ -5,8 +5,8 @@
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
 */
-#ifndef LAY_CLEANUP_H
-#define LAY_CLEANUP_H
+#ifndef REMASTER_CLEANUP_H
+#define REMASTER_CLEANUP_H
 
 #include "oa.h"
 int remaster_cleanup(OA_Context *ctx);

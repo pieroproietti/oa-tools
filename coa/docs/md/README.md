@@ -2,11 +2,6 @@
 
 Benvenuto nella guida ai comandi di **coa**. Qui trovi l'elenco completo delle funzionalità orchestrate dal motore.
 
-## 🚀 Core Actions
-
-- [**remaster**](coa_remaster.md) - Start a system remastering flight (ISO production)
-- [**sysinstall**](coa_sysinstall.md) - Install the live system to a physical disk
-
 ## 📦 Export & Sync
 
 - [**export**](coa_export.md) - Export artifacts (iso, pkg) to a remote Proxmox storage
@@ -19,4 +14,9 @@ Benvenuto nella guida ai comandi di **coa**. Qui trovi l'elenco completo delle f
 - [**help**](coa_help.md) - Help about any command
 - [**kill**](coa_kill.md) - Free the nest and unmount filesystems
 - [**version**](coa_version.md) - Print the version number of coa
+
+## 🚀 Core Actions
+
+- [**remaster**](coa_remaster.md) - Start a system remastering flight (ISO production)
+- [**sysinstall**](coa_sysinstall.md) - Install the live system to a physical disk
 

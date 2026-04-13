@@ -5,10 +5,10 @@
 * Author: Piero Proietti <piero.proietti@gmail.com>
 * License: GPL-3.0-or-later
 */
-#ifndef INSTALL_PARTITION_H
-#define INSTALL_PARTITION_H
+#ifndef INSTALL_INITRD_H
+#define INSTALL_INITRD_H
 
 #include "oa.h"
-int install_partition(OA_Context *ctx);
+int install_initrd(OA_Context *ctx);
 
 #endif
