@@ -30,7 +30,7 @@ type KrillAnswers struct {
 // HandleKrill avvia l'interfaccia interattiva
 func HandleKrill() {
 	fmt.Println("\033[1;36m====================================================\033[0m")
-	fmt.Println("\033[1;36m            KRILL - The coa System Installer        \033[0m")
+	fmt.Println("\033[1;36m       KRILL - The coa Universal Installer          \033[0m")
 	fmt.Println("\033[1;36m====================================================\033[0m")
 
 	disks := getAvailableDisks()
@@ -114,24 +114,24 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 
 	squashPath := getSquashfsPath()
 	if squashPath == "" {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m Could not locate pristine filesystem.squashfs on this live system!\n")
+		fmt.Printf("\033[1;31m[ERROR]\033[0m Could not locate pristine filesystem.squashfs!\n")
 		return
 	}
-	fmt.Printf("\033[1;34m[krill]\033[0m Pristine image located at: %s\n", squashPath)
 
 	hashedPass := generateHashedPassword(ans.Password)
 
-	// Riutilizziamo la struttura dell'engine
+	// Inizializzazione del Piano di Volo
 	plan := engine.FlightPlan{
-		PathLiveFs: "/mnt/krill-target",
+		PathLiveFs: "/mnt/krill-target", // Area di mount per l'installazione
 		Mode:       "install",
-		Plan: []engine.Action{
-			{
-				Command:    "oa_install_partition",
-				RunCommand: disk,
-			},
-		},
+		Plan:       []engine.Action{},
 	}
+
+	// 1. DISCO E PARTIZIONAMENTO
+	plan.Plan = append(plan.Plan, engine.Action{
+		Command:    "oa_install_partition",
+		RunCommand: disk,
+	})
 
 	if ans.UseLuks {
 		plan.Plan = append(plan.Plan, engine.Action{
@@ -146,37 +146,53 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 		})
 	}
 
+	// 2. UNPACK (Scompatta l'immagine e monta le API FS nel target)
+	plan.Plan = append(plan.Plan, engine.Action{
+		Command:    "oa_install_unpack",
+		RunCommand: disk,
+		Args:       []string{squashPath},
+	})
+
+	// 3. CONFIGURAZIONE CHROOT (Usando il nuovo oa_sys_shell universale)
 	plan.Plan = append(plan.Plan,
-		engine.Action{
-			Command:    "oa_install_unpack",
-			RunCommand: disk,
-			Args:       []string{squashPath},
-		},
 		engine.Action{Command: "oa_install_fstab", RunCommand: disk},
-		// RESET MACHINE-ID: Uso di oa_sys_shell in chroot
+
+		// Generazione Machine-ID univoco (Essenziale per systemd e networking)
 		engine.Action{
 			Command:    "oa_sys_shell",
-			RunCommand: "rm -f /etc/machine-id && touch /etc/machine-id",
+			RunCommand: "rm -f /etc/machine-id /var/lib/dbus/machine-id && systemd-machine-id-setup || touch /etc/machine-id",
 			Chroot:     true,
 		},
-		// SETUP HOSTNAME: Uso di oa_sys_shell in chroot
+
+		// Setup Hostname e aggiornamento /etc/hosts (per evitare lag di sudo)
+		engine.Action{
+			Command: "oa_sys_shell",
+			RunCommand: fmt.Sprintf(
+				"echo %s > /etc/hostname && sed -i 's/127.0.1.1.*/127.0.1.1\t%s/' /etc/hosts",
+				ans.Hostname, ans.Hostname,
+			),
+			Chroot: true,
+		},
+
+		// Pulizia file residui della sessione Live
 		engine.Action{
 			Command:    "oa_sys_shell",
-			RunCommand: "echo " + ans.Hostname + " > /etc/hostname",
+			RunCommand: "rm -rf /var/log/installer /var/lib/live/config /etc/sudoers.d/live-user 2>/dev/null",
 			Chroot:     true,
 		},
+
 		engine.Action{Command: "oa_install_users"},
 		engine.Action{Command: "oa_install_initrd"},
 	)
 
+	// 4. BOOTLOADER (UEFI vs BIOS)
 	if isUEFI() {
-		fmt.Println("\033[1;34m[krill]\033[0m UEFI boot detected. Planning EFI Grub installation.")
 		plan.Plan = append(plan.Plan, engine.Action{Command: "oa_install_uefi", RunCommand: disk})
 	} else {
-		fmt.Println("\033[1;34m[krill]\033[0m Legacy BIOS boot detected. Planning PC Grub installation.")
 		plan.Plan = append(plan.Plan, engine.Action{Command: "oa_install_bios", RunCommand: disk})
 	}
 
+	// Configurazione Utente primario
 	plan.Users = []engine.UserConfig{
 		{
 			Login:    ans.Username,
@@ -188,28 +204,18 @@ func generateInstallPlan(ans *KrillAnswers, disk string) {
 		},
 	}
 
-	jsonData, err := json.MarshalIndent(plan, "", "  ")
-	if err != nil {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m Failed to marshal JSON: %v\n", err)
-		return
-	}
-
+	// Salvataggio ed Esecuzione
+	jsonData, _ := json.MarshalIndent(plan, "", "  ")
 	outPath := "/tmp/sysinstall.json"
-	if err := os.WriteFile(outPath, jsonData, 0644); err != nil {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m Failed to write plan: %v\n", err)
-		return
-	}
+	os.WriteFile(outPath, jsonData, 0644)
 
-	fmt.Printf("\033[1;32m[SUCCESS]\033[0m Flight plan compiled and saved to \033[1m%s\033[0m\n", outPath)
-	fmt.Println("\033[1;33m[krill]\033[0m To execute physical installation: \033[1msudo oa /tmp/sysinstall.json\033[0m")
+	fmt.Printf("\033[1;32m[SUCCESS]\033[0m Flight plan ready at %s\n", outPath)
 
-	// Chiamata all'engine centrale
+	// Esecuzione tramite l'engine centrale
 	engine.ExecutePlan(plan)
 }
 
-// =========================================================================
-// HELPER DI SISTEMA (invariati rispetto al tuo codice originale)
-// =========================================================================
+// --- HELPER DI SISTEMA ---
 
 func isUEFI() bool {
 	if _, err := os.Stat("/sys/firmware/efi"); err == nil {
@@ -218,20 +224,13 @@ func isUEFI() bool {
 	return false
 }
 
-// getSquashfsPath
 func getSquashfsPath() string {
 	paths := []string{
-		// Percorsi Debian/Ubuntu Live
-		"/run/live/medium/live/filesystem.squashfs",
-		"/lib/live/mount/medium/live/filesystem.squashfs",
-
-		// Percorso Arch Linux (archiso)
-		"/run/archiso/bootmnt/arch/x86_64/airootfs.sfs",
-
-		// Percorso Remastering locale coa/oa
-		"/home/eggs/iso/live/filesystem.squashfs",
+		"/run/live/medium/live/filesystem.squashfs",       // Debian Live
+		"/lib/live/mount/medium/live/filesystem.squashfs", // Debian Alt
+		"/run/archiso/bootmnt/arch/x86_64/airootfs.sfs",   // Arch
+		"/home/eggs/iso/live/filesystem.squashfs",         // Local coa/oa
 	}
-
 	for _, p := range paths {
 		if _, err := os.Stat(p); err == nil {
 			return p
@@ -251,12 +250,7 @@ func getRootDisk() string {
 
 func getAvailableDisks() []string {
 	rootDisk := getRootDisk()
-
-	out, err := exec.Command("lsblk", "-d", "-n", "-o", "NAME,SIZE,MODEL").Output()
-	if err != nil || len(out) == 0 {
-		return []string{}
-	}
-
+	out, _ := exec.Command("lsblk", "-d", "-n", "-o", "NAME,SIZE,MODEL").Output()
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	var disks []string
 
@@ -264,24 +258,16 @@ func getAvailableDisks() []string {
 		parts := strings.Fields(line)
 		if len(parts) >= 2 {
 			diskName := parts[0]
-
-			if diskName == rootDisk {
+			if diskName == rootDisk || strings.HasPrefix(diskName, "loop") || strings.HasPrefix(diskName, "sr") {
 				continue
 			}
-
-			if strings.HasPrefix(diskName, "loop") || strings.HasPrefix(diskName, "sr") {
-				continue
-			}
-
 			diskStr := fmt.Sprintf("/dev/%s - %s %s", diskName, parts[1], strings.Join(parts[2:], " "))
 			disks = append(disks, diskStr)
 		}
 	}
-
 	if len(disks) == 0 {
 		disks = append(disks, "NO_SAFE_DISKS_FOUND")
 	}
-
 	return disks
 }
 
