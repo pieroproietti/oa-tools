@@ -3,7 +3,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-package krill
+package engine
 
 import (
 	"encoding/json"
@@ -14,9 +14,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 
-	// Importiamo l'engine per usare le sue strutture dati (FlightPlan, Action, ecc.)
 	"coa/src/internal/distro"
-	"coa/src/internal/engine"
 )
 
 // KrillAnswers raccoglie i dati inseriti dall'utente nella TUI
@@ -111,7 +109,7 @@ func HandleKrill(d *distro.Distro) {
 }
 
 func generateInstallPlan(ans *KrillAnswers, disk string, d *distro.Distro) {
-	fmt.Println("\n\033[1;34m[krill]\033[0m Compiling JSON flight plan for the C engine...")
+	fmt.Println("\n\033[1;34m[krill]\033[0m Compiling JSON flight plan for the C ..")
 
 	squashPath := getSquashfsPath()
 	if squashPath == "" {
@@ -122,19 +120,19 @@ func generateInstallPlan(ans *KrillAnswers, disk string, d *distro.Distro) {
 	hashedPass := generateHashedPassword(ans.Password)
 
 	// 1. Inizializzazione del Piano di Volo
-	plan := engine.FlightPlan{
+	plan := FlightPlan{
 		PathLiveFs: "/mnt/krill-target", // Area di mount per l'installazione
 		Mode:       "install",
-		Plan:       []engine.Action{},
+		Plan:       []Action{},
 	}
 
 	// 2. PREPARAZIONE DISCO E FILESYSTEM
 	plan.Plan = append(plan.Plan,
-		engine.Action{Command: "oa_install_partition", RunCommand: disk},                          //
-		engine.Action{Command: "oa_install_format", RunCommand: disk},                             //
-		engine.Action{Command: "oa_install_unpack", RunCommand: disk, Args: []string{squashPath}}, //
+		Action{Command: "oa_install_partition", RunCommand: disk},                          //
+		Action{Command: "oa_install_format", RunCommand: disk},                             //
+		Action{Command: "oa_install_unpack", RunCommand: disk, Args: []string{squashPath}}, //
 		// Prepariamo l'ambiente chroot sul disco fisico
-		engine.Action{Command: "oa_install_prepare", RunCommand: disk},
+		Action{Command: "oa_install_prepare", RunCommand: disk},
 	)
 
 	// 3. LOGICA DISTRO-SPECIFICA (The Mind) [cite: 3, 79]
@@ -164,45 +162,45 @@ func generateInstallPlan(ans *KrillAnswers, disk string, d *distro.Distro) {
 
 	// 4. ESECUZIONE AZIONI UNIVERSALI E CHROOT
 	plan.Plan = append(plan.Plan,
-		engine.Action{Command: "oa_install_fstab", RunCommand: disk}, // [cite: 95]
+		Action{Command: "oa_install_fstab", RunCommand: disk}, // [cite: 95]
 
 		// Configurazione Hostname e Machine-ID via Shell [cite: 95, 96]
-		engine.Action{
+		Action{
 			Command:    "oa_sys_shell",
 			RunCommand: fmt.Sprintf("echo %s > /etc/hostname && systemd-machine-id-setup", ans.Hostname),
 			Chroot:     true,
 		},
 
 		// Generazione Initrd via Shell
-		engine.Action{
+		Action{
 			Command:    "oa_sys_shell",
 			RunCommand: shellInitrdCmd,
 			Chroot:     true,
 		},
 
 		// Installazione Bootloader via Shell
-		engine.Action{
+		Action{
 			Command:    "oa_sys_shell",
 			RunCommand: shellGrubCmd,
 			Chroot:     true,
 		},
 
 		// Iniezione identità utenti (Manteniamo l'azione nativa per sicurezza) [cite: 95, 97]
-		engine.Action{Command: "oa_install_users"},
+		Action{Command: "oa_install_users"},
 
 		// Pulizia residui sessione live
-		engine.Action{
+		Action{
 			Command:    "oa_sys_shell",
 			RunCommand: "rm -rf /var/log/installer /var/lib/live/config /etc/sudoers.d/live-user 2>/dev/null",
 			Chroot:     true,
 		},
 
 		// Unmount e pulizia finale
-		engine.Action{Command: "oa_install_cleanup"},
+		Action{Command: "oa_install_cleanup"},
 	)
 
 	// 5. Configurazione Utente Primario [cite: 97]
-	plan.Users = []engine.UserConfig{
+	plan.Users = []UserConfig{
 		{
 			Login:    ans.Username,
 			Password: hashedPass,
@@ -221,7 +219,7 @@ func generateInstallPlan(ans *KrillAnswers, disk string, d *distro.Distro) {
 	fmt.Printf("\033[1;32m[SUCCESS]\033[0m Flight plan ready at %s\n", outPath)
 
 	// Esecuzione tramite l'engine centrale (oa) [cite: 86]
-	engine.ExecutePlan(plan)
+	ExecutePlan(plan)
 }
 
 // --- HELPER DI SISTEMA ---

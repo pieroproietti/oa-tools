@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"coa/src/internal/distro"
-	"coa/src/internal/krill"
+	"coa/src/internal/engine"
 
 	"github.com/spf13/cobra"
 )
@@ -24,7 +24,7 @@ WARNING: This operation is destructive.`,
 		myDistro := distro.NewDistro()
 
 		// 3. Passa la distro rilevata a HandleKrill
-		krill.HandleKrill(myDistro)
+		engine.HandleKrill(myDistro)
 	},
 }
 

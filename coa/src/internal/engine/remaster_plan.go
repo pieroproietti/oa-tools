@@ -6,13 +6,12 @@
 package engine
 
 import (
+	"coa/src/internal/distro"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
 	"time"
-
-	"coa/src/internal/distro"
 )
 
 // BootloaderRoot definisce dove vengono estratti i bootloader.
