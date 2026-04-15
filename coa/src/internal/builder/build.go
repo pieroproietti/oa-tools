@@ -11,40 +11,7 @@ import (
 
 var AppVersion string
 
-// parseGitVersion separa "v0.6.4-5-g2504384" in (0.6.4, 5) ignorando la 'v'
-func parseGitVersion(v string) (string, string) {
-	// Rimuoviamo la 'v' iniziale se presente, essenziale per i pacchetti
-	cleanV := strings.TrimPrefix(v, "v")
-
-	parts := strings.Split(cleanV, "-")
-	baseVer := parts[0]
-	relNum := "1"
-
-	if len(parts) > 1 {
-		relNum = parts[1]
-	}
-	return baseVer, relNum
-}
-
-func generateDocs(coaDir string) error {
-	// Definiamo unicamente la root della documentazione
-	docPath := filepath.Join(coaDir, "docs")
-
-	fmt.Printf("  -> Triggering internal _gen_docs to %s...\n", docPath)
-
-	// Eseguiamo il binario coa chiamando il comando nascosto unificato
-	genCmd := exec.Command("./coa", "_gen_docs", "--target", docPath)
-	genCmd.Dir = coaDir
-	genCmd.Stdout = os.Stdout
-	genCmd.Stderr = os.Stderr // Utile per vedere se Cobra si lamenta di qualcosa
-
-	if err := genCmd.Run(); err != nil {
-		return fmt.Errorf("failed to generate docs: %w", err)
-	}
-
-	return nil
-}
-
+// HandleBuild coordina la compilazione e delega il packaging ai file specifici
 func HandleBuild(d *distro.Distro, version string) {
 	AppVersion = version
 	baseVer, relNum := parseGitVersion(version)
@@ -73,217 +40,45 @@ func HandleBuild(d *distro.Distro, version string) {
 		return
 	}
 
-	// 3. Generazione Documentazione (Man pages & Completions)
+	// 3. Generazione Documentazione
 	fmt.Println("\033[1;34m[build]\033[0m Generating documentation and completions...")
 	if err := generateDocs(coaDir); err != nil {
 		fmt.Printf("\033[1;31m[ERROR]\033[0m Docs generation failed: %v\n", err)
 		return
 	}
 
-	// 4. Generazione pacchetto nativo tramite routing per famiglia
+	// 4. Routing verso i file specifici
 	switch d.FamilyID {
 	case "archlinux":
+		//buildArchPackage(projRoot, coaDir, baseVer, relNum)
 		buildArchPackage(projRoot, baseVer, relNum)
 	case "fedora", "rhel", "centos", "rocky", "almalinux":
-		buildRpmPackage(projRoot, oaDir, coaDir, baseVer, relNum)
+		buildFedoraPackage(projRoot, oaDir, coaDir, baseVer, relNum)
 	default:
-		// Default a Debian per retrocompatibilità
 		pkgVersion := fmt.Sprintf("%s-%s", baseVer, relNum)
 		buildDebianPackage(projRoot, oaDir, coaDir, pkgVersion)
 	}
 }
 
-func buildRpmPackage(projRoot, oaDir, coaDir, baseVer, relNum string) {
-	pkgName := fmt.Sprintf("oa-tools-%s-%s", baseVer, relNum)
-	buildRoot := filepath.Join("/tmp", "rpmbuild_"+pkgName)
+// Utility condivise
 
-	// Pulizia e creazione struttura standard RPM
-	os.RemoveAll(buildRoot)
-	dirs := []string{"BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"}
-	for _, d := range dirs {
-		os.MkdirAll(filepath.Join(buildRoot, d), 0755)
+func parseGitVersion(v string) (string, string) {
+	cleanV := strings.TrimPrefix(v, "v")
+	parts := strings.Split(cleanV, "-")
+	baseVer := parts[0]
+	relNum := "1"
+	if len(parts) > 1 {
+		relNum = parts[1]
 	}
-
-	specPath := filepath.Join(buildRoot, "SPECS", "oa-tools.spec")
-
-	// Il blocco spec. Usa macro %{nil} per saltare l'estrazione debug sui binari Go/C.
-	specContent := fmt.Sprintf(`%%define debug_package %%{nil}
-
-Name:           oa-tools
-Version:        %s
-Release:        %s%%{?dist}
-Summary:        coa is the mind and oa the arm
-License:        GPLv3
-URL:            https://penguins-eggs.net/blog/eggs-bananas
-
-Requires:       squashfs-tools, xorriso, dosfstools, mtools, dracut-live
-Conflicts:      penguins-eggs
-
-%%description
-oa-tools universal Linux remastering. 
-oa is the dialect version for eggs.
-
-%%prep
-# Nessuna preparazione, usiamo i binari compilati dal Go builder
-
-%%build
-# Nessuna build, binari gia pronti
-
-%%install
-rm -rf %%{buildroot}
-mkdir -p %%{buildroot}/usr/local/bin
-mkdir -p %%{buildroot}/usr/share/man/man1
-mkdir -p %%{buildroot}/usr/share/bash-completion/completions
-mkdir -p %%{buildroot}/usr/share/zsh/vendor-completions
-mkdir -p %%{buildroot}/usr/share/fish/vendor_completions.d
-
-# Copia dei binari assoluti dal progetto
-install -m 0755 %s/oa %%{buildroot}/usr/local/bin/oa
-install -m 0755 %s/coa %%{buildroot}/usr/local/bin/coa
-
-# Documentazione e completamenti
-cp %s/docs/man/*.1 %%{buildroot}/usr/share/man/man1/
-gzip -9 %%{buildroot}/usr/share/man/man1/*.1
-
-install -m 0644 %s/docs/completion/coa.bash %%{buildroot}/usr/share/bash-completion/completions/coa
-install -m 0644 %s/docs/completion/coa.zsh %%{buildroot}/usr/share/zsh/vendor-completions/_coa
-install -m 0644 %s/docs/completion/coa.fish %%{buildroot}/usr/share/fish/vendor_completions.d/coa.fish
-
-%%files
-/usr/local/bin/oa
-/usr/local/bin/coa
-/usr/share/man/man1/*
-/usr/share/bash-completion/completions/coa
-/usr/share/zsh/vendor-completions/_coa
-/usr/share/fish/vendor_completions.d/coa.fish
-`, baseVer, relNum, oaDir, coaDir, coaDir, coaDir, coaDir, coaDir)
-
-	os.WriteFile(specPath, []byte(specContent), 0644)
-
-	fmt.Println("\033[1;34m[build]\033[0m Packing .rpm archive...")
-
-	// Eseguiamo rpmbuild specificando la cartella temporanea come _topdir
-	rpmCmd := exec.Command("rpmbuild", "-bb",
-		"--define", fmt.Sprintf("_topdir %s", buildRoot),
-		specPath)
-	rpmCmd.Stdout, rpmCmd.Stderr = os.Stdout, os.Stderr
-
-	if err := rpmCmd.Run(); err != nil {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m RPM build failed: %v\n", err)
-		return
-	}
-
-	// Recuperiamo il file generato in RPMS/x86_64
-	rpmDir := filepath.Join(buildRoot, "RPMS", "x86_64")
-	rpmFiles, err := filepath.Glob(filepath.Join(rpmDir, "*.rpm"))
-
-	if err == nil && len(rpmFiles) > 0 {
-		for _, file := range rpmFiles {
-			finalTarget := filepath.Join(projRoot, filepath.Base(file))
-			copyFile(file, finalTarget)
-			fmt.Printf("\033[1;32m[SUCCESS]\033[0m Package created: \033[1m%s\033[0m\n", finalTarget)
-		}
-	} else {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m Could not find generated RPM package in %s\n", rpmDir)
-	}
-
-	// Pulizia
-	os.RemoveAll(buildRoot)
+	return baseVer, relNum
 }
 
-func buildDebianPackage(projRoot, oaDir, coaDir, pkgVersion string) {
-	pkgName := fmt.Sprintf("oa-tools_%s_amd64", pkgVersion)
-	buildDir := filepath.Join("/tmp", pkgName)
-
-	// Pulizia preventiva
-	os.RemoveAll(buildDir)
-
-	// Creazione directory
-	dirs := []string{
-		filepath.Join(buildDir, "DEBIAN"),
-		filepath.Join(buildDir, "usr/local/bin"),
-		filepath.Join(buildDir, "usr/share/man/man1"),
-		filepath.Join(buildDir, "usr/share/bash-completion/completions"),
-		filepath.Join(buildDir, "usr/share/zsh/vendor-completions"),
-		filepath.Join(buildDir, "usr/share/fish/vendor_completions.d"),
-	}
-	for _, dir := range dirs {
-		os.MkdirAll(dir, 0755)
-	}
-
-	// Copia binari
-	copyFile(filepath.Join(oaDir, "oa"), filepath.Join(buildDir, "usr/local/bin/oa"))
-	copyFile(filepath.Join(coaDir, "coa"), filepath.Join(buildDir, "usr/local/bin/coa"))
-	os.Chmod(filepath.Join(buildDir, "usr/local/bin/oa"), 0755)
-	os.Chmod(filepath.Join(buildDir, "usr/local/bin/coa"), 0755)
-
-	// Documentazione
-	manDir := filepath.Join(buildDir, "usr/share/man/man1")
-	exec.Command("sh", "-c", fmt.Sprintf("cp %s/docs/man/*.1 %s/ && gzip -9 %s/*.1", coaDir, manDir, manDir)).Run()
-
-	// Completamenti
-	copyFile(filepath.Join(coaDir, "docs/completion/coa.bash"), filepath.Join(buildDir, "usr/share/bash-completion/completions/coa"))
-	copyFile(filepath.Join(coaDir, "docs/completion/coa.zsh"), filepath.Join(buildDir, "usr/share/zsh/vendor-completions/_coa"))
-	copyFile(filepath.Join(coaDir, "docs/completion/coa.fish"), filepath.Join(buildDir, "usr/share/fish/vendor_completions.d/coa.fish"))
-
-	// CORREZIONE: Usa pkgVersion nel file control
-	controlContent := fmt.Sprintf(`Package: oa-tools
-Version: %s
-Architecture: amd64
-Maintainer: Piero Proietti <piero.proietti@gmail.com>
-Depends: squashfs-tools, xorriso, live-boot, live-boot-initramfs-tools, dosfstools, mtools
-Conflicts: penguins-eggs
-Description: coa is the mind and oa the arm
-`, pkgVersion)
-
-	os.WriteFile(filepath.Join(buildDir, "DEBIAN", "control"), []byte(controlContent), 0644)
-
-	fmt.Println("\033[1;34m[build]\033[0m Packing .deb archive...")
-	dpkgCmd := exec.Command("dpkg-deb", "--build", buildDir)
-	dpkgCmd.Stdout, dpkgCmd.Stderr = os.Stdout, os.Stderr
-	dpkgCmd.Run()
-
-	debFile := pkgName + ".deb"
-	finalTarget := filepath.Join(projRoot, debFile)
-
-	data, _ := os.ReadFile(filepath.Join("/tmp", debFile))
-	os.WriteFile(finalTarget, data, 0644)
-
-	os.RemoveAll(buildDir)
-	os.Remove(filepath.Join("/tmp", debFile))
-
-	fmt.Printf("\033[1;32m[SUCCESS]\033[0m Package created: \033[1m%s\033[0m\n", finalTarget)
-}
-
-func buildArchPackage(projRoot, baseVer, relNum string) {
-	pkgbuildContent := fmt.Sprintf(`# Maintainer: Piero Proietti <piero.proietti@gmail.com>
-pkgname=oa-tools
-pkgver=%s
-pkgrel=%s
-pkgdesc="oa-tools universal Linux remastering"
-arch=('x86_64')
-license=('GPL3')
-depends=('archiso' 'xorriso' 'squashfs-tools')
-conflicts=('penguins-eggs')
-options=(!debug)
-
-package() {
-    install -Dm755 "${startdir}/oa/oa" "${pkgdir}/usr/local/bin/oa"
-    install -Dm755 "${startdir}/coa/coa" "${pkgdir}/usr/local/bin/coa"
-    # CORREZIONE: Prende solo i file .1 ignorando le sottocartelle
-    install -Dm644 "${startdir}/coa/docs/man/"*.1 -t "${pkgdir}/usr/share/man/man1/"
-    install -Dm644 "${startdir}/coa/docs/completion/coa.bash" "${pkgdir}/usr/share/bash-completion/completions/coa"
-    install -Dm644 "${startdir}/coa/docs/completion/coa.zsh" "${pkgdir}/usr/share/zsh/vendor-completions/_coa"
-    install -Dm644 "${startdir}/coa/docs/completion/coa.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/coa.fish"
-}
-`, baseVer, relNum)
-
-	err := os.WriteFile(filepath.Join(projRoot, "PKGBUILD"), []byte(pkgbuildContent), 0644)
-	if err != nil {
-		fmt.Printf("\033[1;31m[ERROR]\033[0m Failed to write PKGBUILD: %v\n", err)
-		return
-	}
-	fmt.Printf("\033[1;32m[SUCCESS]\033[0m PKGBUILD generato: %s-%s\n", baseVer, relNum)
+func generateDocs(coaDir string) error {
+	docPath := filepath.Join(coaDir, "docs")
+	genCmd := exec.Command("./coa", "_gen_docs", "--target", docPath)
+	genCmd.Dir = coaDir
+	genCmd.Stdout, genCmd.Stderr = os.Stdout, os.Stderr
+	return genCmd.Run()
 }
 
 func getProjectPaths() (string, string, string) {

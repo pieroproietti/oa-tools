@@ -1,5 +1,5 @@
 /*
- * src/actions/hatch_uefi.c
+ * src/actions/install_uefi.c
  * Remastering core: GRUB installation on physical hardware (Krill)
  * oa: eggs in my dialect🥚🥚
  *

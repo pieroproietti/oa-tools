@@ -28,6 +28,8 @@
 #include "logger.h"
 #include "oa-yocto.h"
 
+#include "helpers.h"
+
 // --- Costanti Globali --
 #define PATH_INPUT PATH_MAX   // 4096 - Per i percorsi che leggiamo
 #define PATH_OUT   8192       // 8K - Per i percorsi che costruiamo
@@ -45,28 +47,31 @@ typedef struct {
 // --- Inclusioni dei Moduli ---
 
 // LAY (Remastering)
-#include "lay_cleanup.h"
-#include "lay_crypted.h"
-#include "lay_initrd.h"
-#include "lay_iso.h"
-#include "lay_isolinux.h"
-#include "lay_livestruct.h"
-#include "lay_prepare.h"
-#include "lay_squash.h"
-#include "lay_uefi.h"
-#include "lay_users.h"
+#include "remaster_cleanup.h"
+#include "remaster_crypted.h"
+#include "remaster_initrd.h"
+#include "remaster_iso.h"
+#include "remaster_isolinux.h"
+#include "remaster_livestruct.h"
+#include "remaster_prepare.h"
+#include "remaster_squash.h"
+#include "remaster_uefi.h"
+#include "remaster_users.h"
 
 // HATCH (Installazione Fisica)
-#include "hatch_format.h"
-#include "hatch_partition.h"
-#include "hatch_unpack.h"
-#include "hatch_fstab.h"
-#include "hatch_users.h"
-#include "hatch_uefi.h"
-#include "hatch_bios.h"
+#include "install_format.h"
+#include "install_partition.h"
+#include "install_unpack.h"
+#include "install_fstab.h"
+#include "install_users.h"
+#include "install_initrd.h"
+#include "install_uefi.h"
+#include "install_bios.h"
+#include "install_prepare.h"
 
 // SYS (Utility Generiche)
 #include "sys_run.h"
+#include "sys_shell.h"
 #include "sys_scan.h"
 #include "sys_suspend.h"
 

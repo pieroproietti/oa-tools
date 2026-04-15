@@ -24,6 +24,7 @@ char *read_file(const char *filename) {
 }
 
 // Il "Vigile Urbano": smista i verbi ai vari moduli tramite OA_Context
+/* oa/src/main.c */
 int execute_verb(cJSON *root, cJSON *task) {
     cJSON *command = cJSON_GetObjectItemCaseSensitive(task, "command");
     if (!cJSON_IsString(command) || (command->valuestring == NULL)) {
@@ -36,45 +37,42 @@ int execute_verb(cJSON *root, cJSON *task) {
 
     LOG_INFO(">>> dispatching to: %s", cmd_name);
     printf("\033[1;34m[oa]\033[0m Executing action '%s'...\n", cmd_name);
-    int status = 1; // Default a errore
+    int status = 1;
 
-    // --- FASE 1: LAY (Creazione Uovo / Remastering) ---
-    if (strcmp(cmd_name, "lay_prepare") == 0)          status = lay_prepare(&ctx);
-    else if (strcmp(cmd_name, "lay_cleanup") == 0)     status = lay_cleanup(&ctx);
-    else if (strcmp(cmd_name, "lay_crypted") == 0)     status = lay_crypted(&ctx);
-    else if (strcmp(cmd_name, "lay_initrd") == 0)      status = lay_initrd(&ctx);
-    else if (strcmp(cmd_name, "lay_iso") == 0)         status = lay_iso(&ctx);
-    else if (strcmp(cmd_name, "lay_isolinux") == 0)    status = lay_isolinux(&ctx);
-    else if (strcmp(cmd_name, "lay_livestruct") == 0)  status = lay_livestruct(&ctx);
-    else if (strcmp(cmd_name, "lay_squash") == 0)      status = lay_squash(&ctx);
-    else if (strcmp(cmd_name, "lay_uefi") == 0)        status = lay_uefi(&ctx);
-    else if (strcmp(cmd_name, "lay_users") == 0)       status = lay_users(&ctx);
+    // --- FASE 1: REMASTER (Ex LAY) ---
+    if (strcmp(cmd_name, "oa_remaster_prepare") == 0)          status = remaster_prepare(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_cleanup") == 0)     status = remaster_cleanup(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_crypted") == 0)     status = remaster_crypted(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_initrd") == 0)      status = remaster_initrd(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_iso") == 0)         status = remaster_iso(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_isolinux") == 0)    status = remaster_isolinux(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_livestruct") == 0)  status = remaster_livestruct(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_squash") == 0)      status = remaster_squash(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_uefi") == 0)        status = remaster_uefi(&ctx);
+    else if (strcmp(cmd_name, "oa_remaster_users") == 0)       status = remaster_users(&ctx);
 
-    // --- FASE 2: HATCH (Schiusa / Installazione Fisica) ---
-    else if (strcmp(cmd_name, "hatch_partition") == 0) status = hatch_partition(&ctx);
-    else if (strcmp(cmd_name, "hatch_format") == 0)    status = hatch_format(&ctx);
-    else if (strcmp(cmd_name, "hatch_unpack") == 0)    status = hatch_unpack(&ctx);
-    else if (strcmp(cmd_name, "hatch_fstab") == 0)     status = hatch_fstab(&ctx);
-    else if (strcmp(cmd_name, "hatch_users") == 0)     status = hatch_users(&ctx);
-    else if (strcmp(cmd_name, "hatch_uefi") == 0)      status = hatch_uefi(&ctx);    
-    else if (strcmp(cmd_name, "hatch_bios") == 0)      status = hatch_bios(&ctx);
+    // --- FASE 2: INSTALL (Ex HATCH) ---
+    else if (strcmp(cmd_name, "oa_install_partition") == 0)    status = install_partition(&ctx);
+    else if (strcmp(cmd_name, "oa_install_format") == 0)       status = install_format(&ctx);
+    else if (strcmp(cmd_name, "oa_install_unpack") == 0)       status = install_unpack(&ctx);
+    else if (strcmp(cmd_name, "oa_install_prepare") == 0)      status = install_prepare(&ctx);
+    else if (strcmp(cmd_name, "oa_install_fstab") == 0)        status = install_fstab(&ctx);
+    else if (strcmp(cmd_name, "oa_install_initrd") == 0)       status = install_initrd(&ctx);
+    else if (strcmp(cmd_name, "oa_install_users") == 0)        status = install_users(&ctx);
+    else if (strcmp(cmd_name, "oa_install_uefi") == 0)         status = install_uefi(&ctx);
+    else if (strcmp(cmd_name, "oa_install_bios") == 0)         status = install_bios(&ctx);
+    else if (strcmp(cmd_name, "oa_install_cleanup") == 0)      status = remaster_cleanup(&ctx);
 
-    // --- FASE 3: SYS (Utility Generiche) ---
-    else if (strcmp(cmd_name, "sys_run") == 0)         status = sys_run(&ctx);
-    else if (strcmp(cmd_name, "sys_scan") == 0)        status = sys_scan(&ctx);
-    else if (strcmp(cmd_name, "sys_suspend") == 0)     status = sys_suspend(&ctx);
-    
-    // --- ERRORE ---
+
+    // --- FASE 3: SYS (Utility) ---
+    else if (strcmp(cmd_name, "oa_sys_shell") == 0)            status = sys_shell(&ctx); 
+    else if (strcmp(cmd_name, "oa_sys_run") == 0)              status = sys_run(&ctx);
+    else if (strcmp(cmd_name, "oa_sys_scan") == 0)             status = sys_scan(&ctx);
+    else if (strcmp(cmd_name, "oa_sys_suspend") == 0)          status = sys_suspend(&ctx);
+
     else {
         LOG_ERR("Unknown command requested: %s", cmd_name);
-        fprintf(stderr, "Error: Unknown command '%s'\n", cmd_name);
         return 1;
-    }
-
-    if (status == 0) {
-        LOG_INFO("<<< action %s finished successfully", cmd_name);
-    } else {
-        LOG_ERR("action %s returned exit status %d", cmd_name, status);
     }
 
     return status;

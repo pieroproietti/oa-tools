@@ -11,9 +11,10 @@ import (
 var AppVersion = "dev"
 
 var rootCmd = &cobra.Command{
-	Use:   "coa",
-	Short: "coa (brooding in my dialect) - The Mind orchestrator",
-	Long:  "coa is the orchestrator written in Go, designed to be the \"Mind\" behind the GNU/Linux system remastering process.",
+	Use:     "coa",
+	Aliases: []string{"eggs"},
+	Short:   "coa (brooding in my dialect) - The Mind orchestrator",
+	Long:    "coa is the orchestrator written in Go, designed to be the \"Mind\" behind the GNU/Linux system remastering process.",
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},

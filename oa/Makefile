@@ -41,6 +41,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 clean:
 	@echo "  Cleaning oa..."
 	@rm -rf $(OBJ_DIR) $(TARGET)
-	@rm -f plan_coa_tmp.json
+	@rm -f /tmp/remaster.json /tmp/sysinstall.json
 
 .PHONY: all clean
