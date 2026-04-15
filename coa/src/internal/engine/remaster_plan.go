@@ -8,10 +8,6 @@ package engine
 import (
 	"coa/src/internal/distro"
 	"fmt"
-	"os"
-	"runtime"
-	"strings"
-	"time"
 )
 
 // GeneratePlan costruisce il piano di volo dinamico
@@ -127,23 +123,8 @@ func GeneratePlan(d *distro.Distro, mode string, workPath string) FlightPlan {
 		})
 	}
 
-	hostname, _ := os.Hostname()
-	timestamp := time.Now().Format("2006-01-02_1504")
-	arch := runtime.GOARCH
-
-	var nameParts []string
-	nameParts = append(nameParts, d.DistroID)
-	if d.CodenameID != "" {
-		nameParts = append(nameParts, d.CodenameID)
-	} else if d.ReleaseID != "" {
-		nameParts = append(nameParts, d.ReleaseID)
-	}
-	if hostname != "" {
-		nameParts = append(nameParts, hostname)
-	}
-
-	distroTag := strings.Join(nameParts, "-")
-	isoName := fmt.Sprintf("egg-of_%s_%s_%s.iso", distroTag, arch, timestamp)
+	// Chiamata a getIsoName per ottenere il nome della ISO
+	isoName := getIsoName(d)
 
 	plan.Plan = append(plan.Plan, Action{
 		Command:   "oa_remaster_iso",
