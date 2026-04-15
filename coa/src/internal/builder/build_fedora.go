@@ -31,7 +31,7 @@ Summary:        coa is the mind and oa the arm
 License:        GPLv3
 URL:            https://penguins-eggs.net/blog/eggs-bananas
 
-Requires:       squashfs-tools, xorriso, dosfstools, mtools, dracut-live, sgdisk
+Requires:       squashfs-tools, xorriso, dosfstools, mtools, dracut-live, gdisk
 Conflicts:      penguins-eggs
 
 %%description
