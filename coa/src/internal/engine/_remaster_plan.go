@@ -7,7 +7,6 @@ package engine
 
 import (
 	"coa/src/internal/distro"
-	"coa/src/internal/pilot"
 	"fmt"
 )
 
@@ -65,42 +64,49 @@ func GeneratePlan(d *distro.Distro, mode string, workPath string) FlightPlan {
 		}
 	}
 
-	// ... dentro GeneratePlan ...
+	if d.FamilyID == "fedora" || d.FamilyID == "rhel" || d.FamilyID == "centos" || d.FamilyID == "rocky" || d.FamilyID == "almalinux" {
+		targetConfDir := "/etc/dracut.conf.d"
+		targetConfPath := fmt.Sprintf("%s/coa.conf", targetConfDir)
+		dracutConfig := "hostonly=\"no\"\nadd_dracutmodules+=\" dmsquash-live rootfs-block bash \"\ncompress=\"xz\""
 
-	// 1. Chiediamo al Pilota cosa fare per l'initramfs
-	task := pilot.GetInitrdTask(d.FamilyID)
+		writeCmd := fmt.Sprintf("mkdir -p %s && echo -e '%s' > %s", targetConfDir, dracutConfig, targetConfPath)
 
-	if task != nil {
-		// 2. Prepariamo i file (es. /etc/dracut.conf.d/coa.conf o /etc/coa-mkinitcpio.conf)
-		for path, content := range task.SetupFiles {
-			writeCmd := fmt.Sprintf("mkdir -p $(dirname %s) && echo -e '%s' > %s", path, content, path)
-			plan.Plan = append(plan.Plan, Action{
-				Command:    "oa_sys_shell",
-				RunCommand: writeCmd,
-				Chroot:     true,
-			})
-		}
-
-		// 3. Lanciamo la rigenerazione vera e propria
 		plan.Plan = append(plan.Plan, Action{
 			Command:    "oa_sys_shell",
-			RunCommand: task.Command,
+			RunCommand: writeCmd,
 			Chroot:     true,
 		})
+	}
 
-		// 4. Pulizia post-operazione
-		for path := range task.SetupFiles {
-			plan.Plan = append(plan.Plan, Action{
-				Command:    "oa_sys_shell",
-				RunCommand: fmt.Sprintf("rm -f %s", path),
-				Chroot:     true,
-			})
-		}
+	// Grazie al chroot nativo in OA, le variabili vengono risolte correttamente nel guest
+	// Comando specifico per la rigenerazione dell'initrd via shell.
+	// Ora che /boot è una copia fisica e /tmp è un tmpfs (gestiti da oa),
+	// il comando torna a essere pulito e lineare.
+	var shellInitrdCmd string
+	switch d.FamilyID {
+	case "archlinux":
+		// Grazie alla copia fisica in C, /boot è ora una directory reale e scrivibile.
+		// Ci limitiamo a garantire i permessi corretti per sicurezza.
+		shellInitrdCmd = "chmod 755 /boot && " +
+			"KVER=$(ls /lib/modules | head -n 1) && " +
+			"mkinitcpio -c /etc/coa_mkinitcpio.conf -k $KVER -g /boot/initrd.img"
+
+	case "fedora", "rhel", "centos", "rocky", "almalinux":
+		shellInitrdCmd = "dracut --force --regenerate-all"
+
+	default: // Debian/Ubuntu
+		// update-initramfs gestisce correttamente i vari kernel installati
+		shellInitrdCmd = "update-initramfs -u -k all || update-initramfs -c -k all"
 	}
 
 	excludeFilePath := generateExcludeList(mode)
 
 	plan.Plan = append(plan.Plan,
+		Action{
+			Command:    "oa_sys_shell",
+			RunCommand: shellInitrdCmd,
+			Chroot:     true,
+		},
 		Action{Command: "oa_remaster_livestruct"},
 		Action{Command: "oa_remaster_isolinux", BootParams: bootParams},
 		Action{Command: "oa_remaster_uefi", BootParams: bootParams},

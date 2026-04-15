@@ -1,0 +1,27 @@
+# coa/conf/brain.yaml
+families:
+  debian:
+    initrd:
+      live: "update-initramfs -u -k all || update-initramfs -c -k all"
+
+  archlinux:
+    initrd:
+      live:
+        command: "KVER=$(ls /lib/modules | head -n 1) && mkinitcpio -c /etc/coa-mkinitcpio.conf -k $KVER -g /boot/initrd.img"
+        setup_files:
+          "/etc/coa-mkinitcpio.conf": |
+            MODULES=(loop overlay squashfs)
+            BINARIES=()
+            FILES=()
+            HOOKS=(base udev memdisk archiso coa_hook filesystems keyboard)
+            COMPRESSION="xz"
+
+  fedora: &fedora_family
+    initrd:
+      live:
+        command: "dracut --force --regenerate-all"
+        setup_files:
+          "/etc/dracut.conf.d/coa.conf": |
+            hostonly="no"
+            add_dracutmodules+=" dmsquash-live rootfs-block bash "
+            compress="xz"
