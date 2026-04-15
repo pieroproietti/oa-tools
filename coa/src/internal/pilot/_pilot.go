@@ -7,8 +7,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// --- DEFINIZIONE DELLE STRUTTURE (Le aree che mancavano) ---
-
 type RemasterConfig struct {
 	BootParams string            `json:"boot_params"`
 	IsoLinks   map[string]string `json:"iso_links,omitempty"`
@@ -22,7 +20,7 @@ type InitrdTask struct {
 	Remaster   RemasterConfig
 }
 
-// Struttura interna per mappare l'unione dei file YAML
+// brainInternal è la struttura che riflette l'unione di tutti i file .yaml
 type brainInternal struct {
 	Initrd struct {
 		Live interface{} `json:"live"`
@@ -39,15 +37,14 @@ type brainInternal struct {
 	} `json:"layout"`
 }
 
-// --- LOGICA DEL PILOTA ---
-
 func GetInitrdTask(familyID string) *InitrdTask {
+	// Cerchiamo la cartella brain.d partendo dai soliti percorsi
 	basePath := findBrainDir()
 	if basePath == "" {
 		return nil
 	}
 
-	// 1. Carica la mappatura delle famiglie
+	// 1. Leggiamo la mappatura delle famiglie
 	mappingData, _ := os.ReadFile(filepath.Join(basePath, "distro.yaml"))
 	var mapping struct {
 		Families map[string]string `yaml:"families"`
@@ -61,7 +58,7 @@ func GetInitrdTask(familyID string) *InitrdTask {
 
 	familyPath := filepath.Join(basePath, folderName)
 
-	// 2. Fonde tutti i file .yaml della cartella della distro
+	// 2. Carichiamo e fondiamo tutti i file .yaml della cartella
 	var bi brainInternal
 	files, _ := filepath.Glob(filepath.Join(familyPath, "*.yaml"))
 	for _, file := range files {
@@ -69,7 +66,7 @@ func GetInitrdTask(familyID string) *InitrdTask {
 		yaml.Unmarshal(data, &bi)
 	}
 
-	// 3. Prepara l'oggetto finale per l'orchestratore
+	// 3. Prepariamo il task finale
 	task := &InitrdTask{
 		SetupFiles: make(map[string]string),
 		Remaster: RemasterConfig{
@@ -80,13 +77,11 @@ func GetInitrdTask(familyID string) *InitrdTask {
 		},
 	}
 
-	// Gestione dinamica dell'initrd (stringa o mappa)
+	// Gestione flessibile per l'initrd (stringa o mappa)
 	parseInitrd(bi.Initrd.Live, task)
 
 	return task
 }
-
-// --- FUNZIONI DI SUPPORTO ---
 
 func findBrainDir() string {
 	paths := []string{"coa/conf/brain.d", "conf/brain.d", "/etc/coa/brain.d", "brain.d"}

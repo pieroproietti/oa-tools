@@ -1,0 +1,6 @@
+families:
+  archlinux: "archlinux.d"
+  debian: "debian.d"
+  ubuntu: "debian.d"
+  fedora: "fedora.d"
+  

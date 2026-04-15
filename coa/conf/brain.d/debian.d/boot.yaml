@@ -1,0 +1,3 @@
+boot:
+  params: "boot=live components quiet splash"
+  

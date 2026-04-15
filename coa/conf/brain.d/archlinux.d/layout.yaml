@@ -1,0 +1,3 @@
+layout:
+  links:
+    "arch/x86_64/airootfs.sfs": "../live/filesystem.squashfs"
