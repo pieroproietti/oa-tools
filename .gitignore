@@ -15,6 +15,7 @@ pkg/*
 *.pkg.tar.zst
 PKGBUILD
 src/*.tar.gz
+*.json
 
 # --- Auto-generated Documentation (coa docs) ---
 coa/docs/man/
