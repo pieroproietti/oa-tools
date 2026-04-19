@@ -38,7 +38,7 @@ func HandleRemaster(mode string, workPath string, d *distro.Distro) {
 		Mode:       mode,
 		Plan:       []Action{{Command: "oa_remaster_prepare"}},
 	}
-	ExecutePlan(prePlan)
+	executePlan(prePlan)
 
 	if err := bridgeConfigs(d, workPath); err != nil {
 		log.Fatalf("\033[1;31m[coa]\033[0m Config bridging failed: %v", err)
@@ -46,31 +46,31 @@ func HandleRemaster(mode string, workPath string, d *distro.Distro) {
 
 	fmt.Printf("\033[1;32m[coa]\033[0m Starting production flight...\n")
 
-	// TODO: Chiamerà GeneratePlan (da spostare in engine/plan.go)
-	flightPlan := GeneratePlan(d, mode, workPath)
+	// TODO: Chiamerà generatePlan (da spostare in engine/plan.go)
+	flightPlan := generatePlan(d, mode, workPath)
 
 	if len(flightPlan.Plan) > 0 && flightPlan.Plan[0].Command == "action_prepare" {
 		flightPlan.Plan = flightPlan.Plan[1:]
 	}
-	ExecutePlan(flightPlan)
+	executePlan(flightPlan)
 }
 
-// ExecutePlan trasforma il piano in JSON e lo dà in pasto a oa
-func ExecutePlan(plan FlightPlan) {
+// executePlan trasforma il piano in JSON e lo dà in pasto a oa
+func executePlan(plan FlightPlan) {
 	jsonData, err := json.MarshalIndent(plan, "", "  ")
 	if err != nil {
 		log.Fatalf("\033[1;31m[coa]\033[0m JSON Error: %v", err)
 	}
 
-	tmpJsonPath := "oa-plan.json"
-	err = os.WriteFile(tmpJsonPath, jsonData, 0644)
+	tmpJSONPath := "oa-plan.json"
+	err = os.WriteFile(tmpJSONPath, jsonData, 0644)
 	if err != nil {
 		log.Fatalf("\033[1;31m[coa]\033[0m Temp file error: %v", err)
 	}
-	// defer os.Remove(tmpJsonPath)
+	// defer os.Remove(tmpJSONPath)
 
 	oaPath := getOaPath()
-	cmd := exec.Command("sudo", oaPath, tmpJsonPath)
+	cmd := exec.Command("sudo", oaPath, tmpJSONPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

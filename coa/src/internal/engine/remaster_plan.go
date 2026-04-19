@@ -11,8 +11,8 @@ import (
 	"fmt"
 )
 
-// GeneratePlan costruisce il piano di volo dinamico basato sul Cervello (pilot)
-func GeneratePlan(d *distro.Distro, mode string, workPath string) FlightPlan {
+// generatePlan costruisce il piano di volo dinamico basato sul Cervello (pilot)
+func generatePlan(d *distro.Distro, mode string, workPath string) FlightPlan {
 	// 1. Recuperiamo i dati dal Pilota (il Cervello Modulare)
 	task := pilot.GetInitrdTask(d.FamilyID)
 

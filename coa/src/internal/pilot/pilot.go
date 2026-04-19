@@ -163,10 +163,10 @@ func RunBrainLint() {
 		// Cerchiamo il marcatore unico di coa
 		if !strings.Contains(strContent, "[ coa brain unit ]") {
 			// Costruzione del "cappello"
-			header := fmt.Sprintf("# [ coa brain unit ]\n")
+			header := "# [ coa brain unit ]\n"
 			header += fmt.Sprintf("# family: %s\n", family)
 			header += fmt.Sprintf("# area:   %s\n", area)
-			header += fmt.Sprintf("# --------------------------------------------------\n\n")
+			header += "# --------------------------------------------------\n\n"
 
 			// Uniamo l'header al contenuto originale (pulendo spazi bianchi extra in cima)
 			newContent := header + strings.TrimSpace(strContent) + "\n"

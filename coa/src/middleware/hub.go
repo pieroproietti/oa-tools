@@ -13,13 +13,15 @@ type DiscoveryData struct {
 	IsRoot       bool
 }
 
+// src/middleware/hub.go
 func GetDiscovery() DiscoveryData {
 	d := distro.NewDistro()
 
-	// Nota: in coa, i campi si chiamano Distro e Family (con la maiuscola)
 	return DiscoveryData{
-		DistroName:   d.Distro, // <--- Cambiato da d.Name a d.Distro
-		Family:       d.Family, // Questo dovrebbe essere già corretto se è maiuscolo
+		// Cambia d.Distro in d.DistroID
+		DistroName: d.DistroID,
+		// Cambia d.Family in d.FamilyID
+		Family:       d.FamilyID,
 		Architecture: runtime.GOARCH,
 		IsRoot:       os.Geteuid() == 0,
 	}

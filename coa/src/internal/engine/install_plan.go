@@ -171,5 +171,5 @@ func generateInstallPlan(ans *KrillAnswers, disk string, d *distro.Distro) {
 	os.WriteFile(outPath, jsonData, 0644)
 
 	fmt.Printf("[SUCCESS] Flight plan ready at %s\n", outPath)
-	ExecutePlan(plan)
+	executePlan(plan)
 }
