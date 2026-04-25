@@ -1,62 +1,140 @@
-# Profilo di Rimasterizzazione per Arch Linux (Coala Edition)
+# Profilo di Rimasterizzazione per Arch Linux (OA) - Evolution Edition
 remaster:
+  - name: "coa-fs-setup"
+    description: "Preparazione filesystem e mount (proiezione host)"
+    command: "oa_mount_logic"
+
   - name: "coa-identity"
     description: "Gestione nativa identità (Purge & Inject stile Yocto)"
-    command: "oa_users" # Coala passerà l'oggetto users con i gruppi wheel, video, audio, autologin
+    command: "oa_users"
 
   - name: "coa-privileges"
-    description: "Abilitazione poteri sudo per il gruppo wheel"
-    command: "echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-wheel && chmod 440 /etc/sudoers.d/10-live-wheel"
+    description: "Abilitazione poteri sudo per il gruppo wheel (Arch standard)"
+    command: "oa_shell"
+    run_command: "sh -c \"echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-group && chmod 440 /etc/sudoers.d/10-live-group\""
     chroot: true
 
   - name: "coa-initrd"
-    description: "Generazione Initramfs custom (Arch mkinitcpio)"
-    command: "mv /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak && cp /etc/coa-mkinitcpio.conf /etc/mkinitcpio.conf && mkinitcpio -P; mv /etc/mkinitcpio.conf.bak /etc/mkinitcpio.conf"
+    description: "Generazione Initramfs tramite mkinitcpio (Arch)"
+    command: "oa_shell"
+    run_command: "mv /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak && cp /etc/coa-mkinitcpio.conf /etc/mkinitcpio.conf && mkinitcpio -P; mv /etc/mkinitcpio.conf.bak /etc/mkinitcpio.conf"
+    #run_command: "mkinitcpio -P"
     chroot: true
 
   - name: "coa-live-struct"
-    description: "Creazione della struttura isodir/live"
-    command: "mkdir -p /home/eggs/isodir/live"
+    description: "Creazione della struttura isodir per il boot"
+    command: "oa_mkdir"
+    path: "/home/eggs/isodir/live"
 
   - name: "coa-kernel-copy"
-    description: "Copia del Kernel standardizzato (vmlinuz-linux-lts)"
-    command: "cp /home/eggs/liveroot/boot/vmlinuz-linux-lts /home/eggs/isodir/live/vmlinuz"
+    description: "Copia del Kernel e Initrd (auto-rilevamento Arch)"
+    command: "oa_shell"
+    run_command: |
+      # Troviamo dinamicamente il primo kernel e il suo initramfs principale (ignorando i fallback)
+      KERNEL=$(ls /home/eggs/liveroot/boot/vmlinuz-* | head -n 1)
+      INITRD=$(ls /home/eggs/liveroot/boot/initramfs-*.img | grep -v fallback | head -n 1)
+      
+      if [ -z "$KERNEL" ] || [ -z "$INITRD" ]; then
+        echo "ERRORE CRITICO: Kernel o Initrd non trovati in /boot!" >&2
+        exit 1
+      fi
+      
+      cp "$KERNEL" /home/eggs/isodir/live/vmlinuz
+      cp "$INITRD" /home/eggs/isodir/live/initrd.img
+    chroot: false
 
   - name: "coa-initrd-copy"
     description: "Copia dell'Initrd standardizzato (initramfs-linux-lts.img)"
-    command: "cp /home/eggs/liveroot/boot/initramfs-linux-lts.img /home/eggs/isodir/live/initrd.img"
-
-  - name: "coa-bootloaders-copy"
-    description: "Copia moduli GRUB e ISOLINUX"
-    command: |
-      cp -a /tmp/coa/bootloaders/grub/x86_64-efi/. /home/eggs/isodir/boot/grub/x86_64-efi/ && \
-      cp -a /tmp/coa/bootloaders/ISOLINUX/. /home/eggs/isodir/isolinux/ && \
+    command: "oa_shell"
+    run_command: "cp /home/eggs/liveroot/boot/initramfs-linux-lts.img /home/eggs/isodir/live/initrd.img"
+    
+  - name: "coa-bootloaders"
+    description: "Copia dei bootloader e creazione immagine FAT per UEFI"
+    command: "oa_shell"
+    run_command: |
+      set -e
+      mkdir -p /home/eggs/isodir/isolinux
+      mkdir -p /home/eggs/isodir/boot/grub
+      mkdir -p /home/eggs/isodir/EFI/BOOT
+      
+      # ISOLINUX
+      cp /tmp/coa/bootloaders/ISOLINUX/isolinux.bin /home/eggs/isodir/isolinux/
       cp /tmp/coa/bootloaders/syslinux/modules/bios/*.c32 /home/eggs/isodir/isolinux/
+      cp /tmp/coa/bootloaders/ISOLINUX/isolinux.cfg /home/eggs/isodir/isolinux/ 2>/dev/null || touch /home/eggs/isodir/isolinux/isolinux.cfg
+      
+      # GRUB & UEFI
+      cp /tmp/coa/bootloaders/grub/grub.cfg /home/eggs/isodir/boot/grub/ 2>/dev/null || touch /home/eggs/isodir/boot/grub/grub.cfg
+      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI
+      
+      # Creazione FAT EFI IMG
+      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192
+      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/boot/grub/grub.cfg ::/EFI/BOOT/grub.cfg
 
-  - name: "coa-efi-prep"
-    description: "Preparazione EFI e immagine efi.img"
-    command: |
-      mkdir -p /home/eggs/isodir/EFI/BOOT && \
-      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI && \
-      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192 && \
-      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img && \
-      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI && \
-      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT && \
-      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI && \
-      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/grub.cfg ::/EFI/BOOT/grub.cfg
+  - name: "coa-live-menus"
+    description: "Generazione configurazioni di boot (Kernel Arch style)"
+    command: "oa_shell"
+    chroot: false
+    run_command: |
+      set -e
+      VOL_ID="OA_LIVE"
+      # Nota: Per Arch usiamo i parametri compatibili con i tuoi hook eggs
+      BOOT_PARAMS="boot=live components quiet splash"
+      WORK_DIR="/home/eggs/isodir"
 
-  - name: "coa-iso-layout"
-    description: "ISO Layout link: arch/x86_64/airootfs.sfs"
-    command: "mkdir -p /home/eggs/isodir/arch/x86_64 && ln -sf ../../live/filesystem.squashfs /home/eggs/isodir/arch/x86_64/airootfs.sfs"
+      # 1. GRUB.cfg
+      cat <<EOF > ${WORK_DIR}/boot/grub/grub.cfg
+      set timeout=5
+      set default=0
+      insmod all_video
+      search --no-floppy --set=root --label ${VOL_ID}
+
+      menuentry "Start OA Live (Arch Linux)" {
+          linux /live/vmlinuz ${BOOT_PARAMS}
+          initrd /live/initrd.img
+      }
+      EOF
+
+      # 2. ISOLINUX.cfg
+      cat <<EOF > ${WORK_DIR}/isolinux/isolinux.cfg
+      UI vesamenu.c32
+      TIMEOUT 50
+      DEFAULT arch
+
+      LABEL arch
+          MENU LABEL Start OA Live (Arch Linux)
+          LINUX /live/vmlinuz
+          APPEND ${BOOT_PARAMS}
+          INITRD /live/initrd.img
+      EOF
+
+      # 3. EFI Trampoline
+      cat <<EOF > ${WORK_DIR}/EFI/BOOT/grub.cfg
+      search --set=root --file /live/filesystem.squashfs
+      set prefix=(\$root)/boot/grub
+      configfile \$prefix/grub.cfg
+      EOF
 
   - name: "coa-squashfs"
-    description: "Compressione SquashFS (zstd livello 3)"
-    command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -processors 4 -noappend -wildcards -ef /tmp/coa/excludes.list"
+    description: "Compressione del sistema (ZSTD)"
+    command: "oa_shell"
+    run_command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -processors 4 -noappend -wildcards -ef /tmp/coa/excludes.list"
 
   - name: "coa-xorriso"
-    description: "Creazione della ISO finale"
-    command: "xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o /home/eggs/egg-coa-arch.iso /home/eggs/isodir"
+    description: "Masterizzazione ISO finale"
+    command: "oa_shell"
+    run_command: "xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o /home/eggs/egg-of_final.iso /home/eggs/isodir"
 
   - name: "coa-cleanup"
-    description: "Smontaggio e pulizia finale"
+    description: "Smontaggio e pulizia"
     command: "oa_umount"
+
+install:
+  - name: "coa-initrd-target"
+    description: "Rigenerazione mkinitcpio sul sistema installato"
+    command: "oa_shell"
+    run_command: "mkinitcpio -P"
+    chroot: true

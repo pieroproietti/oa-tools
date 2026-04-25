@@ -1,0 +1,61 @@
+# Profilo di Rimasterizzazione per Fedora (Coala Edition)
+remaster:
+  - name: "coa-identity"
+    description: "Gestione nativa identità (Purge & Inject stile Yocto)"
+    command: "oa_users"
+
+  - name: "coa-privileges"
+    description: "Abilitazione poteri sudo per il gruppo wheel"
+    command: "echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-wheel && chmod 440 /etc/sudoers.d/10-live-wheel"
+    chroot: true
+
+  - name: "coa-initrd"
+    description: "Generazione Initramfs custom (Fedora dracut)"
+    command: "dracut --force --regenerate-all"
+    chroot: true
+
+  - name: "coa-live-struct"
+    description: "Creazione della struttura isodir/live"
+    command: "mkdir -p /home/eggs/isodir/live"
+
+  - name: "coa-kernel-copy"
+    description: "Copia del Kernel standardizzato in /live/vmlinuz"
+    # Uso del jolly (*) per catturare il kernel indipendentemente dalla versione
+    command: "cp /home/eggs/liveroot/boot/vmlinuz-* /home/eggs/isodir/live/vmlinuz"
+
+  - name: "coa-initrd-copy"
+    description: "Copia dell'Initrd standardizzato in /live/initrd.img"
+    # Uso del jolly (*) per catturare l'initramfs indipendentemente dalla versione
+    command: "cp /home/eggs/liveroot/boot/initramfs-*.img /home/eggs/isodir/live/initrd.img"
+
+  - name: "coa-bootloaders-copy"
+    description: "Copia moduli GRUB, ISOLINUX e Syslinux"
+    command: |
+      cp -a /tmp/coa/bootloaders/grub/x86_64-efi/. /home/eggs/isodir/boot/grub/x86_64-efi/ && \
+      cp -a /tmp/coa/bootloaders/ISOLINUX/. /home/eggs/isodir/isolinux/ && \
+      cp /tmp/coa/bootloaders/syslinux/modules/bios/*.c32 /home/eggs/isodir/isolinux/
+
+  - name: "coa-efi-prep"
+    description: "Preparazione file EFI e immagine FAT (efi.img)"
+    command: |
+      mkdir -p /home/eggs/isodir/EFI/BOOT && \
+      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI && \
+      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192 && \
+      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img && \
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI && \
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT && \
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI && \
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/grub.cfg ::/EFI/BOOT/grub.cfg
+
+  - name: "coa-squashfs"
+    description: "Compressione SquashFS (zstd livello 3, 4 thread)"
+    command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -processors 4 -noappend -wildcards -ef /tmp/coa/excludes.list"
+
+  - name: "coa-xorriso"
+    description: "Creazione della ISO finale"
+    # Nome ISO generico, coa potrà inserire la data dinamicamente
+    command: "xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o /home/eggs/egg-coa-fedora.iso /home/eggs/isodir"
+
+  - name: "coa-cleanup"
+    description: "Smontaggio filesystem virtuali e pulizia finale"
+    command: "oa_umount"
