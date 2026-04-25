@@ -72,10 +72,25 @@ char *read_file(const char *filename) {
     return data;
 }
 
+void print_help(const char *prog_name) {
+    printf("oa engine v%s - Il motore operativo di coa\n\n", OA_VERSION);
+    printf("USO:\n");
+    printf("  %s <percorso_piano.json>  Esegue il piano di volo specificato\n", prog_name);
+    printf("  %s cleanup                Forza lo smontaggio di emergenza (MNT_DETACH)\n", prog_name);
+    printf("  %s -h, --help             Mostra questo messaggio di aiuto\n\n", prog_name);
+}
+
 int main(int argc, char *argv[]) {
+    // 1. Se lanciato senza argomenti, mostra l'help ed esce con errore (1)
     if (argc < 2) {
-        printf("oa engine v%s\nUsage: %s <plan.json> | cleanup\n", OA_VERSION, argv[0]);
+        print_help(argv[0]);
         return 1;
+    }
+
+    // 2. Se l'utente chiede esplicitamente aiuto, mostra l'help ed esce pulito (0)
+    if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+        print_help(argv[0]);
+        return 0;
     }
 
     oa_init_log("/var/log/oa-tools.log");
@@ -135,3 +150,4 @@ int main(int argc, char *argv[]) {
     oa_close_log();
     return status;
 }
+
