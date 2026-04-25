@@ -1,6 +1,6 @@
 ## coa export pkg
 
-Export the latest generated native package (.deb, .rpm, .pkg.tar.zst) to Proxmox
+Export native packages (.deb, .rpm, .pkg.tar.zst) to Proxmox
 
 ```
 coa export pkg [flags]

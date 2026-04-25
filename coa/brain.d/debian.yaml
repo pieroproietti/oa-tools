@@ -31,24 +31,35 @@ remaster:
     command: "oa_shell"
     run_command: "cp /home/eggs/liveroot/vmlinuz /home/eggs/isodir/live/vmlinuz && cp /home/eggs/liveroot/initrd.img /home/eggs/isodir/live/initrd.img"
 
-  - name: "coa-bootloaders-prep"
+  - name: "coa-bootloaders"
     description: "Copia dei bootloader (ISOLINUX/GRUB) e creazione immagine FAT per UEFI"
     command: "oa_shell"
     run_command: |
+      set -e
       mkdir -p /home/eggs/isodir/isolinux
       mkdir -p /home/eggs/isodir/boot/grub
       mkdir -p /home/eggs/isodir/EFI/BOOT
+      
+      # 1. ISOLINUX: Copiamo il binario e i moduli .c32 dal PERCORSO CORRETTO
       cp /tmp/coa/bootloaders/ISOLINUX/isolinux.bin /home/eggs/isodir/isolinux/
-      cp /tmp/coa/bootloaders/ISOLINUX/ldlinux.c32 /home/eggs/isodir/isolinux/
+      cp /tmp/coa/bootloaders/syslinux/modules/bios/*.c32 /home/eggs/isodir/isolinux/
       cp /tmp/coa/bootloaders/ISOLINUX/isolinux.cfg /home/eggs/isodir/isolinux/ 2>/dev/null || touch /home/eggs/isodir/isolinux/isolinux.cfg
+      
+      # 2. GRUB: Copiamo il config
       cp /tmp/coa/bootloaders/grub/grub.cfg /home/eggs/isodir/boot/grub/ 2>/dev/null || touch /home/eggs/isodir/boot/grub/grub.cfg
+      cp /tmp/coa/bootloaders/grub/grub.cfg /home/eggs/isodir/EFI/BOOT/grub.cfg 2>/dev/null || touch /home/eggs/isodir/EFI/BOOT/grub.cfg
+      
+      # 3. UEFI: Copiamo il payload EFI monolitico
       cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI
+      
+      # 4. Creazione FAT EFI IMG
       dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192
       mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img
       mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI
       mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT
       mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
-    chroot: false
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/grub.cfg ::/EFI/BOOT/grub.cfg
+
 
   - name: "coa-squashfs"
     description: "Compressione del sistema (SquashFS zstd)"

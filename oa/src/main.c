@@ -17,10 +17,17 @@ int execute_verb(cJSON *root, cJSON *task) {
     const char *cmd_name = command->valuestring;
     OA_Context ctx = { .root = root, .task = task };
 
-    // Log dell'azione (se presente "info" nel JSON)
+    // Log dell'azione: facciamo "parlare" coa sul terminale per un'esperienza unificata
     cJSON *info = cJSON_GetObjectItemCaseSensitive(task, "info");
     if (cJSON_IsString(info)) {
-        LOG_INFO("INFO TASK: %s", info->valuestring);
+        // Stampa a colori su console identica al wrapper Go
+        printf("%s[coa]%s %s\n", CLR_CYAN, CLR_RESET, info->valuestring);
+        
+        // Tracciamo comunque l'informazione in modo pulito nel file di log di oa
+        if (oa_log_file) {
+            fprintf(oa_log_file, "[coa] %s\n", info->valuestring);
+            fflush(oa_log_file);
+        }
     }
 
     LOG_INFO(">>> Esecuzione verbo: %s", cmd_name);

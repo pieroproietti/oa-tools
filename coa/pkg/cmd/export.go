@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"coa/pkg/distro" // Assicurati che il path sia corretto per il tuo progetto
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,87 +20,134 @@ const (
 	isoSrcDir      = "/home/eggs"
 )
 
-// --- SISTEMA DI LOGGING INTERNO ---
-// (Se hai già queste costanti in root.go o remaster.go, Go le riutilizzerà.
-// Le ometto qui se sono già a livello di package, altrimenti assicurati di averle).
-func logProcess(msg string) {
-	fmt.Printf("\n\033[1;35m[PROCESS]\033[0m %s\n", msg)
-}
-func logClean(msg string) {
-	fmt.Printf("\033[1;34m[CLEAN]\033[0m %s\n", msg)
-}
-func logCopy(msg string) {
-	fmt.Printf("\033[1;34m[COPY]\033[0m %s\n", msg)
-}
-func logSuccess(msg string) {
-	fmt.Printf("\033[1;32m[SUCCESS]\033[0m %s\n", msg)
-}
-func logError(msg string) {
-	fmt.Printf("\033[1;31m[ERROR]\033[0m %s\n", msg)
-}
-func logWarning(msg string) {
-	fmt.Printf("\033[1;33m[WARNING]\033[0m %s\n", msg)
-}
-
-// -----------------------------------
-
 var cleanExport bool
 
 var exportCmd = &cobra.Command{
-	Use:    "export",
-	Short:  "Export artifacts (iso, pkg) to a remote Proxmox storage",
-	Long:   "Export generated ISOs or native packages to a remote server via SCP.",
-	Hidden: false,
+	Use:   "export",
+	Short: "Export artifacts (iso, pkg) to a remote Proxmox storage",
 }
 
 var exportIsoCmd = &cobra.Command{
 	Use:   "iso",
 	Short: "Export the latest ISO to a remote Proxmox storage",
 	Run: func(cmd *cobra.Command, args []string) {
-		CheckSudoRequirements("export iso", false)
+		CheckSudoRequirements(cmd.Name(), false)
 		handleExportIso(cleanExport)
 	},
 }
 
 var exportPkgCmd = &cobra.Command{
 	Use:   "pkg",
-	Short: "Export the latest generated native package (.deb, .rpm, .pkg.tar.zst) to Proxmox",
+	Short: "Export native packages (.deb, .rpm, .pkg.tar.zst) to Proxmox",
 	Run: func(cmd *cobra.Command, args []string) {
-		CheckSudoRequirements("export pkg", false)
+		CheckSudoRequirements(cmd.Name(), false)
 		handleExportPkg(cleanExport)
 	},
 }
 
 func init() {
 	exportCmd.PersistentFlags().BoolVar(&cleanExport, "clean", false, "Clean old versions on remote server before exporting")
-
 	exportCmd.AddCommand(exportIsoCmd)
 	exportCmd.AddCommand(exportPkgCmd)
 	rootCmd.AddCommand(exportCmd)
 }
 
 // =====================================================================
-// LOGICA DI ESPORTAZIONE (Ex-Engine)
+// LOGICA DI ESPORTAZIONE
 // =====================================================================
 
-// handleExportIso copia in remoto la ISO utilizzando SSH/SCP con Multiplexing
-func handleExportIso(clean bool) {
-	allFiles, _ := filepath.Glob(filepath.Join(isoSrcDir, "egg-of_*.iso"))
-	if len(allFiles) == 0 {
-		logError(fmt.Sprintf("Nest is empty. No ISOs found in %s", isoSrcDir))
+// handleExportPkg esporta solo i pacchetti della distro corrente
+func handleExportPkg(clean bool) {
+	myDistro := distro.NewDistro()
+	family := myDistro.FamilyID
+
+	LogCoala("Famiglia rilevata: %s. Ricerca pacchetti pertinenti...", family)
+
+	var pattern string
+	var extension string
+
+	// Filtriamo per estensione in base alla famiglia
+	switch family {
+	case "debian", "ubuntu", "devuan":
+		pattern = "oa-tools*.deb"
+		extension = ".deb"
+	case "arch":
+		pattern = "oa-tools*.pkg.tar.zst"
+		extension = ".pkg.tar.zst"
+	case "fedora", "redhat", "suse":
+		pattern = "oa-tools*.rpm"
+		extension = ".rpm"
+	default:
+		// Se la famiglia non è riconosciuta, usiamo LogCoala per avvisare
+		LogCoala("Nessuna regola di esportazione specifica per la famiglia: %s", family)
 		return
 	}
 
+	foundFiles, _ := filepath.Glob(pattern)
+	if len(foundFiles) == 0 {
+		LogError("Nessun pacchetto %s trovato per l'esportazione.", extension)
+		return
+	}
+
+	// SSH Multiplexing
+	socketPath := "/tmp/coa-ssh-mux-pkg"
+	muxArgs := []string{"-o", "ControlMaster=auto", "-o", "ControlPath=" + socketPath, "-o", "ControlPersist=2m"}
+	defer func() {
+		exec.Command("ssh", "-O", "exit", "-o", "ControlPath="+socketPath, remoteUserHost).Run()
+		os.Remove(socketPath)
+	}()
+
+	if clean {
+		LogCoala("Pulizia remota vecchi pacchetti %s...", extension)
+		cleanCmdStr := fmt.Sprintf("rm -f %soa-tools*%s", remotePkgPath, extension)
+		sshArgs := append(muxArgs, remoteUserHost, cleanCmdStr)
+
+		if err := exec.Command("ssh", sshArgs...).Run(); err != nil {
+			LogCoala("Pulizia remota non necessaria o fallita (nessun file trovato).")
+		} else {
+			LogSuccess("Vecchi pacchetti %s rimossi dal server.", extension)
+		}
+	}
+
+	for _, pkg := range foundFiles {
+		LogCoala("Esportazione: %s", pkg)
+		dstStr := fmt.Sprintf("%s:%s", remoteUserHost, remotePkgPath)
+		scpArgs := append(muxArgs, pkg, dstStr)
+
+		scpCmd := exec.Command("scp", scpArgs...)
+		scpCmd.Stdout, scpCmd.Stderr = os.Stdout, os.Stderr
+
+		if err := scpCmd.Run(); err != nil {
+			LogError("Trasferimento fallito per %s: %v", pkg, err)
+		} else {
+			LogSuccess("%s inviato con successo.", pkg)
+		}
+	}
+}
+
+// handleExportIso (Logica classica con ridenominazione post-processo)
+func handleExportIso(clean bool) {
+	// 1. Ricerca dei file nel nido con il prefisso classico
+	allFiles, _ := filepath.Glob(filepath.Join(isoSrcDir, "egg-of_*.iso"))
+	if len(allFiles) == 0 {
+		LogError("Il nido è vuoto. Nessuna ISO trovata in %s con prefisso 'egg-of_'", isoSrcDir)
+		return
+	}
+
+	// 2. Logica per identificare solo l'ultima versione prodotta per ogni famiglia
 	latestFiles := make(map[string]string)
+	// Regex per isolare il timestamp (es. _2026-04-25_1200.iso)
 	re := regexp.MustCompile(`_\d{4}-\d{2}-\d{2}_\d{4}\.iso$`)
 
 	for _, path := range allFiles {
 		fileName := filepath.Base(path)
+		// Otteniamo il prefisso rimuovendo la parte del tempo (es. egg-of_debian-bookworm)
 		prefix := re.ReplaceAllString(fileName, "")
 
 		if info, err := os.Stat(path); err == nil {
 			if current, exists := latestFiles[prefix]; exists {
 				cInfo, _ := os.Stat(current)
+				// Se il file attuale è più recente di quello salvato, lo sostituiamo
 				if info.ModTime().After(cInfo.ModTime()) {
 					latestFiles[prefix] = path
 				}
@@ -108,7 +157,9 @@ func handleExportIso(clean bool) {
 		}
 	}
 
-	// SSH Multiplexing setup
+	LogCoala("ISO identificate. Preparazione del tunnel SSH...")
+
+	// 3. Setup SSH Multiplexing per velocizzare l'invio
 	socketPath := "/tmp/coa-ssh-mux"
 	muxArgs := []string{
 		"-o", "ControlMaster=auto",
@@ -116,120 +167,44 @@ func handleExportIso(clean bool) {
 		"-o", "ControlPersist=2m",
 	}
 
+	// Assicuriamoci di chiudere il socket alla fine, qualunque cosa accada
 	defer func() {
 		exec.Command("ssh", "-O", "exit", "-o", "ControlPath="+socketPath, remoteUserHost).Run()
 		os.Remove(socketPath)
 	}()
 
+	// 4. Ciclo di esportazione per ogni famiglia trovata
 	for prefix, localPath := range latestFiles {
 		targetFileName := filepath.Base(localPath)
-		logProcess(fmt.Sprintf("Family: %s", prefix))
+		LogCoala("Processando famiglia: %s", prefix)
 
+		// Se richiesto, puliamo le vecchie versioni sul server Proxmox
 		if clean {
-			logClean("Removing old versions on Proxmox...")
+			LogCoala("Pulizia vecchie versioni su Proxmox per %s...", prefix)
 			rmCmdStr := fmt.Sprintf("rm -f %s%s*", remoteIsoPath, prefix)
 			sshArgs := append(muxArgs, remoteUserHost, rmCmdStr)
-			sshCmd := exec.Command("ssh", sshArgs...)
-			sshCmd.Stdout, sshCmd.Stderr, sshCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-			if err := sshCmd.Run(); err != nil {
-				logWarning("Remote cleanup failed or no old files found.")
+
+			if err := exec.Command("ssh", sshArgs...).Run(); err != nil {
+				LogCoala("Nessun vecchio file rimosso (pulizia non necessaria o fallita).")
 			} else {
-				logSuccess("Old versions removed.")
+				LogSuccess("Vecchie versioni rimosse dal server.")
 			}
 		}
 
-		logCopy(fmt.Sprintf("Sending %s to Proxmox...", targetFileName))
+		// Invio effettivo tramite SCP
+		LogCoala("Invio di %s a Proxmox...", targetFileName)
 		dstStr := fmt.Sprintf("%s:%s", remoteUserHost, remoteIsoPath)
 		scpArgs := append(muxArgs, localPath, dstStr)
-		scpCmd := exec.Command("scp", scpArgs...)
-		scpCmd.Stdout, scpCmd.Stderr, scpCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-
-		if err := scpCmd.Run(); err != nil {
-			logError(fmt.Sprintf("Copy failed: %v", err))
-		} else {
-			logSuccess(fmt.Sprintf("%s is now on Proxmox.", targetFileName))
-		}
-	}
-}
-
-// handleExportPkg esporta i pacchetti nativi (DEB, Arch o RPM)
-func handleExportPkg(clean bool) {
-	logProcess("Searching for native packages...")
-
-	// 1. Cerchiamo i pacchetti generati
-	debFiles, _ := filepath.Glob("oa-tools*.deb")
-	archFiles, _ := filepath.Glob("oa-tools*.pkg.tar.zst")
-	rpmFiles, _ := filepath.Glob("oa-tools*.rpm")
-
-	var allPackages []string
-	allPackages = append(allPackages, debFiles...)
-	allPackages = append(allPackages, archFiles...)
-	allPackages = append(allPackages, rpmFiles...)
-
-	if len(allPackages) == 0 {
-		logError("No native packages found.")
-		return
-	}
-
-	// --- SETUP SSH MULTIPLEXING ---
-	socketPath := "/tmp/coa-ssh-mux-pkg"
-	muxArgs := []string{
-		"-o", "ControlMaster=auto",
-		"-o", "ControlPath=" + socketPath,
-		"-o", "ControlPersist=2m",
-	}
-
-	defer func() {
-		exec.Command("ssh", "-O", "exit", "-o", "ControlPath="+socketPath, remoteUserHost).Run()
-		os.Remove(socketPath)
-	}()
-
-	if clean {
-		logClean(fmt.Sprintf("Removing old oa-tools packages on %s...", remoteUserHost))
-
-		// 2. Costruzione dinamica del target di pulizia
-		var rmTargets string
-		if len(debFiles) > 0 {
-			rmTargets += remotePkgPath + "oa-tools*.deb "
-		}
-		if len(archFiles) > 0 {
-			rmTargets += remotePkgPath + "oa-tools*.pkg.tar.zst "
-		}
-		if len(rpmFiles) > 0 {
-			rmTargets += remotePkgPath + "oa-tools*.rpm "
-		}
-
-		cleanCmdStr := "rm -f " + rmTargets
-		sshArgs := append(muxArgs, remoteUserHost, cleanCmdStr)
-
-		cleanCmd := exec.Command("ssh", sshArgs...)
-		cleanCmd.Stdout, cleanCmd.Stderr, cleanCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-
-		if err := cleanCmd.Run(); err != nil {
-			logError(fmt.Sprintf("Remote cleanup failed: %v", err))
-		} else {
-			logSuccess("Old packages removed.")
-		}
-	}
-
-	// 3. Invio di tutti i pacchetti trovati
-	for i, pkg := range allPackages {
-		logCopy(fmt.Sprintf("Sending %s to Proxmox...", pkg))
-
-		dstStr := fmt.Sprintf("%s:%s", remoteUserHost, remotePkgPath)
-		scpArgs := append(muxArgs, pkg, dstStr)
 
 		scpCmd := exec.Command("scp", scpArgs...)
-		if i == 0 {
-			scpCmd.Stdout, scpCmd.Stderr, scpCmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-		} else {
-			scpCmd.Stdout, scpCmd.Stderr = os.Stdout, os.Stderr
-		}
+		// Agganciamo l'output per vedere il progresso di SCP
+		scpCmd.Stdout = os.Stdout
+		scpCmd.Stderr = os.Stderr
 
 		if err := scpCmd.Run(); err != nil {
-			logError(fmt.Sprintf("SCP transfer failed for %s: %v", pkg, err))
+			LogError("Trasferimento fallito per %s: %v", targetFileName, err)
 		} else {
-			logSuccess(fmt.Sprintf("%s successfully exported to Proxmox.", pkg))
+			LogSuccess("%s esportata correttamente su Proxmox.", targetFileName)
 		}
 	}
 }
