@@ -54,7 +54,7 @@ int oa_mount(OA_Context *ctx) {
     if (!cJSON_IsString(path_item)) return 1;
 
     const char *base = path_item->valuestring;
-    const char *mode = cJSON_IsString(mode_item) ? mode_item->valuestring : "standard";
+    // const char *mode = cJSON_IsString(mode_item) ? mode_item->valuestring : "standard";
 
     char liveroot_path[PATH_SAFE], overlay_path[PATH_SAFE];
     snprintf(liveroot_path, sizeof(liveroot_path), "%s/liveroot", base);

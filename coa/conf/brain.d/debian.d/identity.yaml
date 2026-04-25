@@ -1,6 +1,0 @@
-# [ coa brain unit ]
-# family: debian
-# area:   identity
-# --------------------------------------------------
-admin_group: "sudo"
-user_groups: ["cdrom", "audio", "video", "plugdev", "netdev", "autologin"]

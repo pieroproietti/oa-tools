@@ -14,6 +14,7 @@ TARGET="$REMOTE_USER@$REMOTE_HOST"
 # 2. Genera suffisso comune per i file di contesto
 RAND_SUFFIX=$(printf "%03d" $((RANDOM % 1000)))
 FILE_COA="CONTEXT_COA_${RAND_SUFFIX}.txt"
+FILE_COA="CONTEXT_COA_${RAND_SUFFIX}.txt"
 FILE_OA="CONTEXT_OA_${RAND_SUFFIX}.txt"
 FILE_DOCS="CONTEXT_DOCS_${RAND_SUFFIX}.txt"
 
@@ -75,12 +76,19 @@ FILES_COA=(
     coa/conf/*.yaml 
 )
 
+FILES_COA=(
+    coa/*
+    coa/pkg/**/*
+    coa/brain.d/*
+)
+
 # FILES_DOCS: la documentazione
 FILES_DOCS=(
     DOCS/**/*.md
 )
 
 # 4. Costruzione locale dei pacchetti di contesto
+build_context "$FILE_COA" "${FILES_COA[@]}"
 build_context "$FILE_COA" "${FILES_COA[@]}"
 build_context "$FILE_OA" "${FILES_OA[@]}"
 build_context "$FILE_DOCS" "${FILES_DOCS[@]}"
@@ -93,7 +101,7 @@ shopt -u globstar
 echo -e "\033[1;32m[SYNC]\033[0m Pulizia remota e trasferimento in corso..."
 
 # Usiamo tar per impacchettare, inviare e scompattare in un unico tunnel SSH
-tar -cf - "$FILE_COA" "$FILE_OA" "$FILE_DOCS"| ssh "$TARGET" "cd $DEST_PATH && rm -f CONTEXT_OA_*.txt CONTEXT_COA_*.txt CONTEXT_DOCS_*.txt && tar -xf -"
+tar -cf - "$FILE_COA" "$FILE_COA" "$FILE_OA" "$FILE_DOCS"| ssh "$TARGET" "cd $DEST_PATH && rm -f CONTEXT_OA_*.txt CONTEXT_COA_*.txt CONTEXT_COA_*.txt CONTEXT_DOCS_*.txt && tar -xf -"
 
 # 6. Pulizia locale dei file temporanei
 rm "$FILE_OA" "$FILE_COA" "$FILE_DOCS" 

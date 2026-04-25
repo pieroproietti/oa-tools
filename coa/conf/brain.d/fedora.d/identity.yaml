@@ -1,6 +1,0 @@
-# [ coa brain unit ]
-# family: fedora
-# area:   identity
-# --------------------------------------------------
-admin_group: "wheel"
-user_groups: ["audio", "video", "plugdev", "netdev", "autologin"]

@@ -1,18 +1,51 @@
-/*
- * oa: eggs in my dialect🥚🥚
- * remastering core
- *
- * Author: Piero Proietti <piero.proietti@gmail.com>
- * License: GPL-3.0-or-later
- */
 #include "oa.h"
-#include "oa-mount.h"
-#include "oa-shell.h"
-#include "oa-umount.h"
-#include "oa-users.h"
+int oa_mkdir(OA_Context *ctx);
+int oa_bind(OA_Context *ctx);
+int oa_cp(OA_Context *ctx);
+int oa_mount_generic(OA_Context *ctx);
+int oa_umount(OA_Context *ctx);
 
+int execute_verb(cJSON *root, cJSON *task) {
+    cJSON *command = cJSON_GetObjectItemCaseSensitive(task, "command");
+    if (!cJSON_IsString(command)) return 1;
 
-// Helper per leggere il file JSON
+    const char *cmd_name = command->valuestring;
+    OA_Context ctx = { .root = root, .task = task };
+
+    // Log dell'azione
+    cJSON *info = cJSON_GetObjectItemCaseSensitive(task, "info");
+    if (cJSON_IsString(info)) printf("%s\n", info->valuestring);
+
+    LOG_INFO(">>> Esecuzione verbo: %s", cmd_name);
+    // Dispatcher
+
+    if (strcmp(cmd_name, "oa_umount") == 0) 
+        return oa_umount(&ctx);
+    else if (strcmp(cmd_name, "oa_shell") == 0) {
+        return oa_shell(&ctx);
+    } else if (strcmp(cmd_name, "oa_users") == 0) {
+        return oa_users(&ctx);
+    } else if (strcmp(cmd_name, "oa_mkdir") == 0) {          // <--- AGGIUNGI QUESTO
+        return oa_mkdir(&ctx);
+    } else if (strcmp(cmd_name, "oa_bind") == 0) {           // <--- AGGIUNGI QUESTO
+        return oa_bind(&ctx);
+    } else if (strcmp(cmd_name, "oa_cp") == 0) {             // <--- AGGIUNGI QUESTO
+        return oa_cp(&ctx);
+    } else if (strcmp(cmd_name, "oa_mkdir") == 0) {             // <--- AGGIUNGI QUESTO
+        return oa_mkdir(&ctx);
+    } else if (strcmp(cmd_name, "oa_mount_generic") == 0) {  // <--- AGGIUNGI QUESTO
+        return oa_mount_generic(&ctx);
+    } else if (strcmp(cmd_name, "oa_umount") == 0) {         // <--- AGGIUNGI QUESTO
+        return oa_umount(&ctx);
+    } else {
+        LOG_ERR("Unknown command requested: %s", cmd_name);
+        return 1;
+    }
+
+    LOG_ERR("Comando sconosciuto: %s", cmd_name);
+    return 1;
+}
+
 char *read_file(const char *filename) {
     FILE *f = fopen(filename, "rb");
     if (!f) return NULL;
@@ -21,6 +54,7 @@ char *read_file(const char *filename) {
     fseek(f, 0, SEEK_SET);
     char *data = malloc(len + 1);
     if (data) {
+        LOG_ERR("IO_ERROR: Impossibile aprire il piano di volo '%s' (errno: %d)", filename, errno);
         fread(data, 1, len, f);
         data[len] = '\0';
     }
@@ -28,138 +62,33 @@ char *read_file(const char *filename) {
     return data;
 }
 
-// Il "Vigile Urbano": smista i verbi ai vari moduli tramite OA_Context
-/* oa/src/main.c */
-// Il "Vigile Urbano": smista i verbi ai vari moduli tramite OA_Context
-/* oa/src/main.c */
-int execute_verb(cJSON *root, cJSON *task) {
-    cJSON *command = cJSON_GetObjectItemCaseSensitive(task, "command");
-    cJSON *info = cJSON_GetObjectItemCaseSensitive(task, "info");
-
-    if (!cJSON_IsString(command) || (command->valuestring == NULL)) {
-        LOG_ERR("Task without a valid 'command' field found.");
-        return 1;
-    }
-
-    const char *cmd_name = command->valuestring;
-    OA_Context ctx = { .root = root, .task = task };
-    
-    if (cJSON_IsString(info) && info->valuestring != NULL) {
-        // Se coa ha inviato una descrizione "umana", usala
-        printf("\033[1;36m[oa]\033[0m %s\n", info->valuestring);
-    }
-
-    LOG_INFO(">>> dispatching to: %s", cmd_name);
-    int status = 1;
-
-    if (strcmp(cmd_name, "oa_mount") == 0) {
-        status = oa_mount(&ctx);
-    } 
-    else if (strcmp(cmd_name, "oa_shell") == 0) {
-        status = oa_shell(&ctx);
-    } 
-    else if (strcmp(cmd_name, "oa_umount") == 0) {
-        status = oa_umount(&ctx);
-    } 
-    else if (strcmp(cmd_name, "oa_users") == 0) {
-        status = oa_users(&ctx);
-    } 
-    // AGGIUNTO: Chiusura ufficiale e pacifica del volo
-    else if (strcmp(cmd_name, "oa_remaster_cleanup") == 0) {
-        LOG_INFO("Smontaggio filesystem virtuali (Recursive Lazy Unmount)...");
-        int res1 = system("umount -R -l /home/eggs/liveroot 2>/dev/null");
-        int res2 = system("umount -R -l /home/eggs/.overlay 2>/dev/null");
-        
-        if (res1 == 0 && res2 == 0) {
-            LOG_INFO("Cleanup completed successfully.");
-        } else {
-            LOG_INFO("Cleanup eseguito (alcuni target potevano essere gia liberi).");
-        }
-        status = 0; // Impostiamo lo stato a 0 (successo) per non far fallire il piano
-    } 
-    else {
-        LOG_ERR("Unknown command requested: %s", cmd_name);
-        return 1;
-    }
-
-    return status;
-}
-
-/**
- * main
- */
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("oa engine v%s\nUsage: %s <plan.json>\n",OA_VERSION, argv[0]);
+        printf("oa engine v%s\nUsage: %s <plan.json>\n", OA_VERSION, argv[0]);
         return 1;
     }
 
-    // In main.c, all'inizio del main()
-    if (argc >= 2 && strcmp(argv[1], "cleanup") == 0) {
-        LOG_INFO("Smontaggio filesystem virtuali (Recursive Lazy Unmount)...");
-        
-        // 1. Rendiamo i mount privati per evitare la propagazione all'host
-        system("mount --make-rprivate /home/eggs/liveroot 2>/dev/null");
-        
-        // 2. Ora possiamo smontare in sicurezza
-        int res1 = system("umount -R -l /home/eggs/liveroot 2>/dev/null");
-        int res2 = system("umount -R -l /home/eggs/.overlay 2>/dev/null");        
-        return 0;
-    }
-
-    // Inizializziamo il logger subito (es. oa.log per chiarezza)
     oa_init_log("/var/log/oa-tools.log");
-    LOG_INFO("=== STARTING OA ENGINE ===");
-    LOG_INFO("Input plan: %s", argv[1]);
-
     char *json_data = read_file(argv[1]);
-    if (!json_data) {
-        LOG_ERR("Could not read file: %s", argv[1]);
-        fprintf(stderr, "Error: Could not read file %s\n", argv[1]);
-        oa_close_log();
-        return 1;
-    }
+    if (!json_data) return 1;
 
     cJSON *json = cJSON_Parse(json_data);
-    if (!json) {
-        LOG_ERR("JSON parsing failed for %s", argv[1]);
-        fprintf(stderr, "Error: Invalid JSON format\n");
-        free(json_data);
-        oa_close_log();
-        return 1;
-    }
+    if (!json) return 1;
 
     cJSON *plan = cJSON_GetObjectItemCaseSensitive(json, "plan");
-    int final_status = 0;
+    int status = 0;
 
-    // --- LOGICA DEL PIANO DI VOLO ---
     if (cJSON_IsArray(plan)) {
-        LOG_INFO("Plan detected: processing %d tasks", cJSON_GetArraySize(plan));
         cJSON *task;
-        int step = 0;
         cJSON_ArrayForEach(task, plan) {
-            step++;
-            LOG_INFO("--- Task %d ---", step);
-            if (execute_verb(json, task) != 0) {
-                LOG_ERR("Plan halted at step %d due to previous error", step);
-                fprintf(stderr, "Error: Plan halted at step %d\n", step);
-                final_status = 1;
-                break;
-            }
+            if ((status = execute_verb(json, task)) != 0) break;
         }
     } else {
-        LOG_INFO("No plan array found. Executing root as a single task.");
-        final_status = execute_verb(json, json);
-    }
-
-    if (final_status == 0) {
-        LOG_INFO("=== PLAN COMPLETED SUCCESSFULLY ===");
-    } else {
-        LOG_ERR("=== PLAN FAILED ===");
+        status = execute_verb(json, json);
     }
 
     cJSON_Delete(json);
     free(json_data);
     oa_close_log();
-    return final_status;
+    return status;
 }

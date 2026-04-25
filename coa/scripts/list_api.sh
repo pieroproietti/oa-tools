@@ -1,1 +1,0 @@
-go doc -short ./src/internal/$1

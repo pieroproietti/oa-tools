@@ -1,0 +1,6 @@
+# Assicura che le dipendenze siano allineate
+    go mod tidy
+    
+    # Compila il binario
+    go build -o coa main.go
+

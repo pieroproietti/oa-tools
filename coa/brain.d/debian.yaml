@@ -1,0 +1,65 @@
+# Profilo di Rimasterizzazione per Debian (Trixie/OA) - Evolution Edition
+remaster:
+  - name: "coa-fs-setup"
+    description: "Preparazione filesystem e mount (proiezione host)"
+    command: "oa_mount_logic" # Go espanderà questo in oa_mkdir, oa_cp e oa_bind
+
+  - name: "coa-identity"
+    description: "Gestione nativa identità (Purge & Inject stile Yocto)"
+    command: "oa_users"
+    # Nota: Go inietterà automaticamente l'oggetto "users" qui
+
+  - name: "coa-privileges"
+    description: "Abilitazione poteri sudo per il gruppo live"
+    command: "oa_shell"
+    run_command: "sh -c \"echo '%sudo ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-group && chmod 440 /etc/sudoers.d/10-live-group\""
+    chroot: true
+
+  - name: "coa-initrd"
+    description: "Generazione Initramfs custom nel chroot"
+    command: "oa_shell"
+    run_command: "update-initramfs -u -k all || update-initramfs -c -k all"
+    chroot: true
+
+  - name: "coa-live-struct"
+    description: "Creazione della struttura isodir per il boot"
+    command: "oa_mkdir"
+    path: "/home/eggs/isodir/live"
+
+  - name: "coa-kernel-copy"
+    description: "Copia del Kernel e Initrd standardizzati per la ISO"
+    command: "oa_shell"
+    run_command: "cp /home/eggs/liveroot/vmlinuz /home/eggs/isodir/live/vmlinuz && cp /home/eggs/liveroot/initrd.img /home/eggs/isodir/live/initrd.img"
+
+  - name: "coa-efi-prep"
+    description: "Preparazione file EFI e immagine FAT (efi.img)"
+    command: "oa_shell" # Per ora shell, in futuro oa_efi_img
+    run_command: |
+      mkdir -p /home/eggs/isodir/EFI/BOOT && \
+      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI && \
+      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192 && \
+      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img && \
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI && \
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT && \
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
+
+  - name: "coa-squashfs"
+    description: "Compressione del sistema (SquashFS zstd)"
+    command: "oa_shell"
+    run_command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -processors 4 -noappend -wildcards -ef /tmp/coa/excludes.list"
+
+  - name: "coa-xorriso"
+    description: "Creazione della ISO finale con xorriso"
+    command: "oa_shell"
+    run_command: "xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o /home/eggs/egg-final.iso /home/eggs/isodir"
+
+  - name: "coa-cleanup"
+    description: "Smontaggio e pulizia finale (Smart Umount)"
+    command: "oa_umount"
+
+install:
+  - name: "coa-initrd-target"
+    description: "Rigenerazione initramfs sul sistema installato"
+    command: "oa_shell"
+    run_command: "update-initramfs -u -k all"
+    chroot: true

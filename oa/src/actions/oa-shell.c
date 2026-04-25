@@ -3,9 +3,7 @@
  * Remastering core: User & Group Identity artisan
  * oa: eggs in my dialect🥚🥚
  * * shell.c (Il Passpartout): L'invenzione geniale. Il ponte perfetto tra il cervello (Go)
- * e il sistema operativo. Usa fork, exec e waitpid in C per eseguire qualsiasi altra cosa
- * comandata da Go, garantendoti che il C sappia sempre se il comando ha avuto successo o
- * ha fallito.
+ * e il sistema operativo.
  * * Author: Piero Proietti <piero.proietti@gmail.com>
  * License: GPL-3.0-or-later
  */
@@ -21,8 +19,14 @@
 int oa_shell(OA_Context *ctx) {
     cJSON *cmd_obj = cJSON_GetObjectItemCaseSensitive(ctx->task, "run_command");
     cJSON *chroot_obj = cJSON_GetObjectItemCaseSensitive(ctx->task, "chroot");
-    cJSON *path_obj = cJSON_GetObjectItemCaseSensitive(ctx->root, "pathLiveFs");
-    cJSON *info_obj = cJSON_GetObjectItemCaseSensitive(ctx->task, "info"); // <-- Nuovo campo
+    cJSON *info_obj = cJSON_GetObjectItemCaseSensitive(ctx->task, "info");
+
+    // ---> IL FIX È QUI <---
+    // Cerca prima nel task, poi fai fallback sulla root globale
+    cJSON *path_obj = cJSON_GetObjectItemCaseSensitive(ctx->task, "pathLiveFs");
+    if (!path_obj) {
+        path_obj = cJSON_GetObjectItemCaseSensitive(ctx->root, "pathLiveFs");
+    }
 
     if (!cJSON_IsString(cmd_obj)) {
         LOG_ERR("oa_shell: 'run_command' mancante.");
@@ -45,15 +49,12 @@ int oa_shell(OA_Context *ctx) {
         cJSON *mode_obj = cJSON_GetObjectItemCaseSensitive(ctx->root, "mode");
 
         // Motore Bimodale:
-        // Se siamo in modalità "install", usiamo il percorso esatto (es. /tmp/coa/calamares-root)
-        // Altrimenti (remaster), manteniamo la logica classica con /liveroot.
         if (cJSON_IsString(mode_obj) && strcmp(mode_obj->valuestring, "install") == 0) {
             snprintf(target_root, sizeof(target_root), "%s", path_obj->valuestring);
         } else {
             snprintf(target_root, sizeof(target_root), "%s/liveroot", path_obj->valuestring);
         }
 
-        // Stampiamo il path risolto nel log per sicurezza e debug futuro
         LOG_INFO("Target chroot path resolved to: [%s]", target_root);
 
         pid_t pid = fork();
