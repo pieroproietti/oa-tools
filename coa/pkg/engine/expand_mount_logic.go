@@ -91,5 +91,14 @@ func expandMountLogic(basePath string) []OATask {
 	tasks = append(tasks, OATask{Command: "oa_bind", Src: "/dev", Dst: filepath.Join(liveroot, "dev"), Info: "API FS: dev"})
 	tasks = append(tasks, OATask{Command: "oa_bind", Src: "/run", Dst: filepath.Join(liveroot, "run"), Info: "API FS: run"})
 
+	// 6. CHROOT FIX: Creazione di /tmp con Sticky Bit e mount di tmpfs in RAM
+	// Questo blocco risolve in modo definitivo l'errore di mkinitcpio/pacman/apt
+	tmpPath := filepath.Join(liveroot, "tmp")
+	tasks = append(tasks, OATask{
+		Command:    "oa_shell",
+		Info:       "API FS: tmp (Sticky Bit + Tmpfs)",
+		RunCommand: "mkdir -p " + tmpPath + " && chmod 1777 " + tmpPath + " && mount -t tmpfs -o mode=1777 tmpfs " + tmpPath,
+	})
+
 	return tasks
 }

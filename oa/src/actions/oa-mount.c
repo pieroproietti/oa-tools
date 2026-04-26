@@ -128,15 +128,27 @@ int oa_mount(OA_Context *ctx) {
     char p[PATH_SAFE];
     for(int i=0; i<5; i++) {
         snprintf(p, sizeof(p), "%s/%s", liveroot_path, api_fs[i]);
-        mkdir(p, 0755);
-        if (strcmp(api_fs[i], "tmp") == 0) mount("tmpfs", p, "tmpfs", 0, NULL);
+        
+        if (strcmp(api_fs[i], "tmp") == 0) {
+            // Gestione speciale per /tmp: Permessi 1777
+            mkdir(p, 01777);
+            chmod(p, 01777); // Forziamo lo sticky bit, mkdir a volte viene ignorato dall'umask
+            
+            // Montiamo tmpfs specificando esplicitamente i permessi nelle opzioni
+            if (mount("tmpfs", p, "tmpfs", 0, "mode=1777") != 0) {
+                fprintf(stderr, "\033[1;33m[oa WARN]\033[0m tmpfs mount failed on %s: %s\n", p, strerror(errno));
+            }
+        } else {
+            // Comportamento standard per proc, sys, run, dev
+            mkdir(p, 0755);
+        }
     }
     
     snprintf(p, sizeof(p), "%s/proc", liveroot_path); mount("proc", p, "proc", 0, NULL);
     snprintf(p, sizeof(p), "%s/sys", liveroot_path);  mount("sysfs", p, "sysfs", 0, NULL);
     snprintf(p, sizeof(p), "%s/dev", liveroot_path);  fortified_bind_mount("/dev", p, MS_BIND | MS_REC);
     snprintf(p, sizeof(p), "%s/run", liveroot_path);  fortified_bind_mount("/run", p, MS_BIND | MS_REC);
-
+    
     printf("\033[1;32m[oa PREPARE]\033[0m Full environment mirrored at %s\n", liveroot_path);
     return 0;
 }

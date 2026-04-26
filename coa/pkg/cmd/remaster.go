@@ -15,10 +15,11 @@ import (
 
 // --- SISTEMA DI LOGGING CENTRALIZZATO ---
 const (
-	ColorCyan  = "\033[1;36m"
-	ColorRed   = "\033[1;31m"
-	ColorGreen = "\033[1;32m"
-	ColorReset = "\033[0m"
+	ColorCyan   = "\033[1;36m"
+	ColorRed    = "\033[1;31m"
+	ColorGreen  = "\033[1;32m"
+	ColorYellow = "\033[1;33m" // Aggiunto per i messaggi di debug/breakpoint
+	ColorReset  = "\033[0m"
 )
 
 func LogCoala(format string, a ...interface{}) {
@@ -41,6 +42,7 @@ func LogError(format string, a ...interface{}) {
 var (
 	produceMode string
 	producePath string
+	stopAfter   string // NUOVA VARIABILE: Memorizza il target del breakpoint
 )
 
 var remasterCmd = &cobra.Command{
@@ -50,7 +52,10 @@ var remasterCmd = &cobra.Command{
 It uses the new Coala architecture to read the agnostic Brain profile 
 and generate a precise execution plan for the OA engine.`,
 	Example: `  # Start a standard ISO remastering
-  sudo ./coa remaster --mode standard`,
+  sudo ./coa remaster --mode standard
+  
+  # Debug mode: stop after a specific step
+  sudo ./coa remaster --stop-after coa-initrd`,
 	Run: func(cmd *cobra.Command, args []string) {
 		CheckSudoRequirements(cmd.Name(), true)
 
@@ -68,7 +73,8 @@ and generate a precise execution plan for the OA engine.`,
 		LogSuccess("Spartito caricato con successo.")
 
 		// 3. ENGINE: Generiamo il piano JSON per oa
-		planPath, err := engine.GeneratePlan(profile.Remaster, myDistro.FamilyID, true, producePath)
+		// NOTA: Passiamo stopAfter come 5° parametro al motore!
+		planPath, err := engine.GeneratePlan(profile.Remaster, myDistro.FamilyID, true, producePath, stopAfter)
 		if err != nil {
 			LogError("Impossibile generare il piano di volo: %v", err)
 			os.Exit(1)
@@ -95,14 +101,21 @@ and generate a precise execution plan for the OA engine.`,
 			os.Exit(1)
 		}
 
-		// Vittoria finale
-		fmt.Printf("\n%s[SUCCESSO]%s Rimasterizzazione completata! L'uovo è pronto. 🐧🥚\n", ColorGreen, ColorReset)
+		// Vittoria finale: Differenziamo il messaggio se abbiamo usato il breakpoint
+		if stopAfter != "" {
+			fmt.Printf("\n%s[DEBUG]%s Breakpoint raggiunto e ambiente smontato in sicurezza. Pronto per l'ispezione! 🐧🔍\n", ColorYellow, ColorReset)
+		} else {
+			fmt.Printf("\n%s[SUCCESSO]%s Rimasterizzazione completata! L'uovo è pronto. 🐧🥚\n", ColorGreen, ColorReset)
+		}
 	},
 }
 
 func init() {
 	remasterCmd.Flags().StringVar(&produceMode, "mode", "standard", "standard, clone, or crypted")
 	remasterCmd.Flags().StringVar(&producePath, "path", "/home/eggs", "working directory")
+
+	// Registrazione del nuovo flag per il breakpoint
+	remasterCmd.Flags().StringVar(&stopAfter, "stop-after", "", "Ferma l'esecuzione dopo uno step specifico (es. coa-initrd)")
 
 	rootCmd.AddCommand(remasterCmd)
 }
