@@ -1,6 +1,11 @@
 package utils
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"os/exec"
+)
 
 const (
 	ColorCyan  = "\033[1;36m"
@@ -18,4 +23,29 @@ func LogCoala(format string, a ...interface{}) {
 func LogError(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	fmt.Printf("%s[ERRORE]%s %s\n", ColorRed, ColorReset, msg)
+}
+
+// Usate da tailor
+// Exec esegue un comando sh e mostra l'output in tempo reale sul terminale
+func Exec(command string) error {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+// ExecQuiet esegue un comando senza mostrare nulla (utile per update veloci)
+func ExecQuiet(command string) error {
+	cmd := exec.Command("sh", "-c", command)
+	return cmd.Run()
+}
+
+// ExecCapture esegue un comando e restituisce l'output come stringa
+// Fondamentale per getAvailablePackages (apt-cache pkgnames)
+func ExecCapture(command string) (string, error) {
+	var out bytes.Buffer
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Stdout = &out
+	// Stderr lo ignoriamo o lo mandiamo a null per pulizia
+	return out.String(), cmd.Run()
 }
