@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func Wear(costumeName string, noAcc bool, noFirm bool) error {
@@ -14,11 +15,22 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 	}
 
 	// 1. Identifichiamo se è un costume o un accessorio
-	// Proviamo prima in costumes, poi in accessories
 	costumeDir := filepath.Join(root, "costumes", costumeName)
 	if _, err := os.Stat(costumeDir); os.IsNotExist(err) {
 		costumeDir = filepath.Join(root, "accessories", costumeName)
 	}
+
+	// Verifica se la cartella esiste davvero prima di procedere
+	if _, err := os.Stat(costumeDir); os.IsNotExist(err) {
+		return fmt.Errorf("costume o accessorio '%s' non trovato nel wardrobe", costumeName)
+	}
+
+	// 🚀 CAMBIO DIRECTORY: Ci spostiamo nel costume per risolvere i path relativi degli script
+	originalWd, _ := os.Getwd()
+	if err := os.Chdir(costumeDir); err != nil {
+		return fmt.Errorf("impossibile entrare nella cartella del costume: %v", err)
+	}
+	defer os.Chdir(originalWd) // Torna sempre alla cartella di partenza
 
 	// 2. Trova e carica lo YAML compatibile
 	yamlFile := findCompatibleYaml(costumeDir)
@@ -42,10 +54,14 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 		var toInstall []string
 
 		for _, pkg := range suit.Sequence.Packages {
-			if _, ok := available[pkg]; ok {
-				toInstall = append(toInstall, pkg)
+			// ✨ PULIZIA STRINGHE: Rimuoviamo spazi e caratteri invisibili
+			cleanPkg := strings.TrimSpace(pkg)
+			cleanPkg = strings.ReplaceAll(cleanPkg, "\u00a0", "")
+
+			if _, ok := available[cleanPkg]; ok {
+				toInstall = append(toInstall, cleanPkg)
 			} else {
-				utils.LogCoala("⚠️  Pacchetto non trovato, salto: %s", pkg)
+				utils.LogCoala("⚠️  Pacchetto non trovato, salto: [%s]", cleanPkg)
 			}
 		}
 
@@ -55,12 +71,10 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 	}
 
 	// 5. 🚀 LA PARACULATA: Rsync della sysroot
-	// Se esiste la cartella 'sysroot' nel costume, la riversiamo in '/'
 	sysrootPath := filepath.Join(costumeDir, "sysroot")
 	if _, err := os.Stat(sysrootPath); err == nil {
 		utils.LogCoala("Applicazione personalizzazioni (sysroot)...")
-		// -a: archive, -H: hard-links, -S: sparse, -X: xattrs
-		// Usiamo sudo implicitamente perché coa deve girare come root per queste operazioni
+		// Usiamo il path assoluto della sysroot per rsync
 		cmd := fmt.Sprintf("rsync -aHSX %s/ /", sysrootPath)
 		if err := utils.Exec(cmd); err != nil {
 			utils.LogError("Errore durante l'applicazione della sysroot: %v", err)
@@ -68,6 +82,7 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 	}
 
 	// 6. Finalizzazione (comandi personalizzati)
+	// Essendo dentro costumeDir, i path tipo ../../scripts/ ora funzionano!
 	if len(suit.Sequence.Cmds) > 0 {
 		utils.LogCoala("Esecuzione comandi di sequenza...")
 		for _, command := range suit.Sequence.Cmds {
