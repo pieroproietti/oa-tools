@@ -60,6 +60,13 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 		}
 	}
 
+	// 3. LA CILIEGINA SULLA TORTA:
+    // Ora che /etc/skel è completa di tutto (sfondi di colibri, config di eggs-dev, ecc.)
+    // la copiamo nella home dell'utente corrente.
+    if err := copySkelToUser(); err != nil {
+        utils.LogError("Impossibile aggiornare la home utente: %v", err)
+    }
+
 	utils.LogCoala("✅ Sistema 'confezionato' con successo!")
 	return nil
 }
@@ -68,22 +75,23 @@ func Wear(costumeName string, noAcc bool, noFirm bool) error {
 func applySuit(dir string, suit *Suit) error {
 	utils.LogCoala("🧵 Cucitura componente: %s", suit.Name)
 
-	// 🚀 Cambio Directory per risolvere i path relativi degli script (../../scripts/)
+	// Directory per i path relativi (../../scripts/)
 	originalWd, _ := os.Getwd()
 	os.Chdir(dir)
 	defer os.Chdir(originalWd)
 
-	// A. Repository Update
+	// A. Update Repository
 	if suit.Sequence.Repositories.Update {
 		utils.LogCoala("[%s] Aggiornamento repository...", suit.Name)
 		utils.ExecQuiet("apt-get update")
 	}
 
-	// B. Installazione Pacchetti
-	if len(suit.Sequence.Packages) > 0 {
-		available := getAvailablePackages() // Ora usa la logica stream corretta
+	// B. Unione dei pacchetti (Root + Sequence)
+	allPackages := append(suit.Packages, suit.Sequence.Packages...)
+	if len(allPackages) > 0 {
+		available := getAvailablePackages()
 		var toInstall []string
-		for _, pkg := range suit.Sequence.Packages {
+		for _, pkg := range allPackages {
 			cleanPkg := strings.TrimSpace(pkg)
 			if _, ok := available[cleanPkg]; ok {
 				toInstall = append(toInstall, cleanPkg)
@@ -96,28 +104,64 @@ func applySuit(dir string, suit *Suit) error {
 		}
 	}
 
-	// C. La Paraculata (Sysroot)
-	// Controlliamo se esiste una cartella 'sysroot' o 'dirs' nell'accessorio/costume
+	// C. Sysroot / Dirs (La Paraculata) [cite: 2, 3, 9]
 	sysrootPath := filepath.Join(dir, "sysroot")
 	if _, err := os.Stat(sysrootPath); os.IsNotExist(err) {
-		// Alcuni tuoi accessori usano 'dirs' invece di 'sysroot'
 		sysrootPath = filepath.Join(dir, "dirs")
 	}
 
 	if _, err := os.Stat(sysrootPath); err == nil {
-		utils.LogCoala("🚀 Riversamento sysroot/dirs per %s...", suit.Name)
-		cmd := fmt.Sprintf("rsync -aHSX %s/ /", sysrootPath)
+		utils.LogCoala("🚀 Riversamento configurazioni per %s...", suit.Name)
+		cmd := fmt.Sprintf("rsync -aHSX %s/ /", sysrootPath) // Il '/' finale è fondamentale 
 		utils.Exec(cmd)
 	}
 
-	// D. Esecuzione Script (Sequence e Finalize)
-	allCmds := append(suit.Sequence.Cmds, suit.Finalize.Cmds...)
+	// D. Unione dei comandi (Root + Sequence + Finalize)
+	allCmds := append(suit.Cmds, suit.Sequence.Cmds...)
+	allCmds = append(allCmds, suit.Finalize.Cmds...)
+	
 	if len(allCmds) > 0 {
-		utils.LogCoala("[%s] Esecuzione script di configurazione...", suit.Name)
+		utils.LogCoala("[%s] Esecuzione script...", suit.Name)
 		for _, command := range allCmds {
 			utils.Exec(command)
 		}
 	}
 
+	return nil
+}
+
+func copySkelToUser() error {
+	// 1. Identifichiamo l'utente che ha lanciato sudo
+	sudoUser := os.Getenv("SUDO_USER")
+	if sudoUser == "" || sudoUser == "root" {
+		utils.LogCoala("Esecuzione non via sudo o come root, salto la copia della skel nella home.")
+		return nil
+	}
+
+	// Recuperiamo la home directory dell'utente
+	userHome := fmt.Sprintf("/home/%s", sudoUser)
+	if sudoUser == "root" {
+		userHome = "/root"
+	}
+
+	utils.LogCoala("Cucitura finale: applico le configurazioni desktop alla home di %s...", sudoUser)
+
+	// 2. Usiamo rsync per copiare il contenuto di /etc/skel nella home dell'utente
+	// -a: archive mode
+	// Note: il '/' finale in /etc/skel/ è vitale per copiare il contenuto e non la cartella stessa
+	rsyncCmd := fmt.Sprintf("rsync -a /etc/skel/ %s/", userHome)
+	if err := utils.ExecQuiet(rsyncCmd); err != nil {
+		return fmt.Errorf("errore durante la copia della skel: %v", err)
+	}
+
+	// 3. Sistemiamo i permessi (chown)
+	// Essendo passati dalla sysroot del wardrobe a /etc/skel e poi alla home, 
+	// dobbiamo assicurarci che l'utente possa leggere e scrivere i propri file.
+	chownCmd := fmt.Sprintf("chown -R %s:%s %s", sudoUser, sudoUser, userHome)
+	if err := utils.ExecQuiet(chownCmd); err != nil {
+		return fmt.Errorf("errore durante il cambio di proprietà dei file: %v", err)
+	}
+
+	utils.LogCoala("✅ Configurazioni utente applicate correttamente.")
 	return nil
 }

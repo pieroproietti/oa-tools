@@ -7,12 +7,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const WardrobeDefaultRepo = "https://github.com/pieroproietti/oa-wardrobe.git"
 var getCmd = &cobra.Command{
 	Use:   "get [REPO_URL]",
 	Short: "Scarica un wardrobe da un repository",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		repo := "https://github.com/pieroproietti/penguins-wardrobe"
+		
+		repo := WardrobeDefaultRepo
 		if len(args) > 0 {
 			repo = args[0]
 		}

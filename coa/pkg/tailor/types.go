@@ -14,6 +14,8 @@ type Suit struct {
 	Name        string   `yaml:"name"`
 	Accessories []string `yaml:"accessories"` // Deve corrispondere alla chiave nello YAML
 	Description string   `yaml:"description"`
+	Packages    []string `yaml:"packages"` // <--- Aggiungi questo per il livello root
+	Cmds        []string `yaml:"cmds"`     // <--- Aggiungi questo per il livello root
 	Distro      string   `yaml:"distro"`
 	Reboot      bool     `yaml:"reboot"`
 	Sequence    struct {

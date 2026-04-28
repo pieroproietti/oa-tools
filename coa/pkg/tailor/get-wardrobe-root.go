@@ -30,5 +30,5 @@ func getWardrobeRoot() (string, error) {
 		homeDir = home
 	}
 
-	return filepath.Join(homeDir, ".wardrobe"), nil
+	return filepath.Join(homeDir, ".oa-wardrobe"), nil
 }
