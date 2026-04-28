@@ -158,7 +158,14 @@ func (d *Distro) GetISOName() string {
 func (d *Distro) GetISOPrefix() string {
 	// Puliamo il nome della distro
 	distroName := strings.ToLower(strings.ReplaceAll(d.DistroID, " ", "-"))
+	
+	// CodeName
+	codeName:= strings.ToLower(strings.ReplaceAll(d.CodenameID, " ", "-"))
+	if codeName == "" {
+		codeName = strings.ToLower(strings.ReplaceAll(d.ReleaseID, " ", "-"))
+	}
 
+	// hostNale
 	hostName, err := os.Hostname()
 	if err != nil {
 		hostName = "unknown"
@@ -170,5 +177,5 @@ func (d *Distro) GetISOPrefix() string {
 		arch = runtime.GOARCH
 	}
 
-	return fmt.Sprintf("egg-of-%s-%s-%s-", distroName, hostName, arch)
+	return fmt.Sprintf("egg-of-%s-%s-%s-%s-", distroName, codeName, hostName, arch)
 }

@@ -52,7 +52,8 @@ int oa_users(OA_Context *ctx) {
         
         if (!fp || !fs) { 
             LOG_ERR("Errore fatale: impossibile aprire i database utenti in %s/etc/", liveroot);
-            if(fp) fclose(fp); if(fs) fclose(fs); 
+            if(fp) fclose(fp); 
+            if(fs) fclose(fs); 
             return 1;
         }
 
