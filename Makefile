@@ -29,10 +29,17 @@ build_oa:
 build_coa:
 	@echo "  MAKING coa (Version: $(VERSION))..."
 	@cd $(COA_DIR) && go build -ldflags "-X 'coa/pkg/cmd.AppVersion=$(VERSION)'" -o coa main.go
-	@echo "  GENERATING DOCUMENTATION..."
-	# Il '-' iniziale impedisce a make di fallire se il comando _gen_docs non esiste ancora
-	@-./$(COA_BIN) _gen_docs --target ./$(COA_DIR)/docs 2>/dev/null || true
-
+	@echo "  GENERATING DOCUMENTATION & COMPLETIONS..."
+	# Creiamo le directory se non esistono, altrimenti i comandi potrebbero fallire
+	@mkdir -p $(COA_DIR)/docs/man $(COA_DIR)/docs/completion $(COA_DIR)/docs/md
+	
+	# 1. Generazione documenti via comando interno
+	@-./$(COA_BIN) _gen_docs --target ./$(COA_DIR)/docs/md 2>/dev/null || true
+	
+	# 2. Generazione esplicita dei completamenti (fondamentale per il TAB)
+	@-./$(COA_BIN) completion bash > $(COA_DIR)/docs/completion/coa.bash 2>/dev/null || true
+	@-./$(COA_BIN) completion zsh > $(COA_DIR)/docs/completion/coa.zsh 2>/dev/null || true
+	
 clean:
 	@echo "  Pulizia binari e piani di volo..."
 	@$(MAKE) -C $(OA_DIR) clean || true
