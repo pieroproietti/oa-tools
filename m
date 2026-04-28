@@ -1,4 +1,3 @@
 make clean
 make
-coa/coa build
-
+coa/coa tools build

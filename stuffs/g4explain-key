@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "key on github"
+echo ""
+echo "* GPG_SIGNING_KEY (private key)"
+echo "* GPG_KEY_ID (gpg --list-keys --keyid-format LONG)"
+echo "* GPG_PASSPHRASE (passphrase)"
+
+ 

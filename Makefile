@@ -12,18 +12,19 @@ COA_BIN = $(COA_DIR)/coa
 # Patterns per i pacchetti nativi
 PACKAGES = *.deb *.rpm *.pkg.tar.zst PKGBUILD
 
-# Rimosso il vecchio build_coa
+# Target principale
 all: build_oa build_coa
 	@echo "--------------------------------------"
 	@echo "Hatching completed successfully! 🐣"
-	@echo "Version:         $(VERSION)"
-	@echo "coa Brain (Go):  ./$(COA_BIN)"
-	@echo "oa Workhorse (C): ./$(OA_BIN)"
+	@echo "Version:           $(VERSION)"
+	@echo "coa Brain (Go):    ./$(COA_BIN)"
+	@echo "oa Workhorse (C):  ./$(OA_BIN)"
 	@echo "--------------------------------------"
 
 build_oa:
 	@echo "  MAKING oa..."
-	@$(MAKE) -C $(OA_DIR) VERSION="$(VERSION)"
+	# Passiamo LIBS="-lcrypt" al Makefile interno di oa
+	@$(MAKE) -C $(OA_DIR) VERSION="$(VERSION)" LIBS="-lcrypt"
 
 build_coa:
 	@echo "  MAKING coa (Version: $(VERSION))..."

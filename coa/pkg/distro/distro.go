@@ -9,7 +9,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 )
@@ -22,6 +24,7 @@ type Distro struct {
 	FamilyID       string
 	DistroLike     string
 	DistroUniqueID string
+	Arch           string
 }
 
 // DerivativeMapping mappa la struttura del file YAML
@@ -141,4 +144,31 @@ func NewDistro() *Distro {
 	fmt.Printf("\033[1;31m[coa]\033[0m Distro sconosciuta (%s/%s). Aggiungila a derivatives.yaml!\n", rawID, rawCodename)
 	os.Exit(1)
 	return nil
+}
+
+// GetISOName genera il nome completo: egg-of-<distro>-<host>-<arch>-<data>.iso
+func (d *Distro) GetISOName() string {
+	timestamp := time.Now().Format("2006-01-02_1504")
+	// Chiamiamo il metodo che genera il prefisso
+	prefix := d.GetISOPrefix()
+	return fmt.Sprintf("%s%s.iso", prefix, timestamp)
+}
+
+// GetISOPrefix genera la parte iniziale: egg-of-<distro>-<host>-<arch>-
+func (d *Distro) GetISOPrefix() string {
+	// Puliamo il nome della distro
+	distroName := strings.ToLower(strings.ReplaceAll(d.DistroID, " ", "-"))
+
+	hostName, err := os.Hostname()
+	if err != nil {
+		hostName = "unknown"
+	}
+	hostName = strings.ToLower(strings.ReplaceAll(hostName, " ", "-"))
+
+	arch := d.Arch
+	if arch == "" {
+		arch = runtime.GOARCH
+	}
+
+	return fmt.Sprintf("egg-of-%s-%s-%s-", distroName, hostName, arch)
 }

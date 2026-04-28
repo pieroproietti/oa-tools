@@ -26,7 +26,7 @@ func init() {
 }
 
 // =====================================================================
-// LOGICA DI PULIZIA (Ex-Engine)
+// LOGICA DI PULIZIA
 // =====================================================================
 
 // handleKill gestisce la pulizia profonda invocando prima oa e poi rimuovendo la directory
@@ -56,5 +56,19 @@ func handleKill() {
 		LogError("Physical removal failed: %v", err)
 	} else {
 		LogSuccess("Nest is empty. System clean.")
+	}
+
+	// 3. Rimozione del file di log di oa
+	logFile := "/var/log/oa-tools.log"
+	LogCoala("Removing log file: %s", logFile)
+
+	if err := os.Remove(logFile); err != nil {
+		if os.IsNotExist(err) {
+			LogCoala("Log file '%s' non trovato, nulla da rimuovere.", logFile)
+		} else {
+			LogError("Failed to remove log file: %v", err)
+		}
+	} else {
+		LogSuccess("Log file eliminato con successo.")
 	}
 }

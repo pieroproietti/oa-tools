@@ -1,0 +1,848 @@
+../.wardrobe/
+├── accessories
+│   ├── base
+│   │   └── debian.yaml
+│   ├── educational
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   └── ubuntu.yaml
+│   ├── eggs-dev
+│   │   ├── alpine.yaml
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   ├── fedora.yaml
+│   │   └── opensuse.yaml
+│   ├── firmwares
+│   │   ├── codecs
+│   │   │   └── debian.yaml
+│   │   ├── debian.yaml
+│   │   ├── nas
+│   │   │   └── debian.yaml
+│   │   ├── network-cable
+│   │   │   └── debian.yaml
+│   │   ├── network-wifi
+│   │   │   └── debian.yaml
+│   │   ├── printers
+│   │   │   └── debian.yaml
+│   │   ├── video-amd
+│   │   │   └── debian.yaml
+│   │   └── video-nvidia
+│   │       └── debian.yaml
+│   ├── firmwares-light
+│   │   └── debian.yaml
+│   ├── flatpak
+│   │   └── debian.yaml
+│   ├── graphics
+│   │   ├── debian.yaml
+│   │   └── fedora.yaml
+│   ├── kvm
+│   │   └── debian.yaml
+│   ├── liquorix
+│   │   ├── debian
+│   │   │   └── debian.yaml
+│   │   ├── debian.yaml
+│   │   ├── devuan
+│   │   │   ├── chimaera
+│   │   │   │   └── debian.yaml
+│   │   │   ├── daedalus
+│   │   │   │   └── debian.yaml
+│   │   │   └── debian.yaml
+│   │   └── ubuntu
+│   │       ├── debian.yaml
+│   │       └── second-stage
+│   │           └── debian.yaml
+│   ├── live-installer
+│   │   ├── debs
+│   │   │   ├── circle-flags-svg_2.3.0_all.deb
+│   │   │   └── live-installer_2022.03.12_all.deb
+│   │   ├── dirs
+│   │   │   ├── etc
+│   │   │   │   ├── linuxmint
+│   │   │   │   │   ├── info
+│   │   │   │   │   └── mintSystem.conf
+│   │   │   │   ├── lsb-release
+│   │   │   │   └── sudoers.d
+│   │   │   │       └── live-installer
+│   │   │   └── usr
+│   │   │       └── share
+│   │   │           └── debian-system-adjustments
+│   │   │               ├── firefox
+│   │   │               │   └── distribution.ini
+│   │   │               ├── fonts
+│   │   │               │   └── 53-monospace-lcd-filter.conf
+│   │   │               ├── gnome-system-tools
+│   │   │               │   └── services.ui
+│   │   │               ├── nm-applet
+│   │   │               │   └── nm-applet.desktop
+│   │   │               ├── rhythmbox
+│   │   │               │   └── style.css
+│   │   │               ├── sound
+│   │   │               │   └── silent.oga
+│   │   │               └── systemd
+│   │   │                   ├── adjust-grub-title
+│   │   │                   ├── start
+│   │   │                   └── stop
+│   │   ├── index.yaml
+│   │   └── README.md
+│   ├── multimedia
+│   │   ├── debian.yaml
+│   │   └── fedora.yaml
+│   ├── nextcloud
+│   │   ├── debian.yaml
+│   │   ├── mariadb
+│   │   │   ├── create-database-nextcloud.sql
+│   │   │   └── index.yaml
+│   │   └── README.md
+│   ├── office
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   └── fedora.yaml
+│   └── waydroid
+│       ├── arch.yaml
+│       ├── debian.yaml
+│       ├── install_image_from_local.sh
+│       ├── install_image_from_sourceforge.sh
+│       ├── install_waydroid_extras.sh
+│       ├── install_waydroid_package_manager.sh
+│       ├── install_waydroid_settings.sh
+│       ├── no_hw_accelleration.sh
+│       └── ubuntu.yaml
+├── config
+│   ├── bg.yaml
+│   ├── br.yaml
+│   ├── de.yaml
+│   ├── es.yaml
+│   ├── fr.yaml
+│   ├── it.yaml
+│   ├── nl.yaml
+│   ├── pe.yaml
+│   ├── pve.yaml
+│   ├── README.md
+│   ├── ru.yaml
+│   ├── uk.yaml
+│   └── us.yaml
+├── costumes
+│   ├── albatros
+│   │   ├── alpine.yaml
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   ├── fedora.yaml
+│   │   └── sysroot
+│   │       ├── etc
+│   │       │   └── skel
+│   │       └── usr
+│   │           └── share
+│   │               └── backgrounds
+│   │                   └── albastros
+│   │                       ├── credits.md
+│   │                       └── Diomedea_exulans_in_flight_-_SE_Tasmania.jpg
+│   ├── chicks
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   ├── sysroot
+│   │   │   ├── etc
+│   │   │   │   └── skel
+│   │   │   └── usr
+│   │   │       └── share
+│   │   │           └── backgrounds
+│   │   │               └── chick
+│   │   │                   ├── credits.md
+│   │   │                   └── emperor-penguin-chicks-at-sea-world.jpg
+│   │   └── ubuntu.yaml
+│   ├── colibri
+│   │   ├── alpine.yaml
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   ├── README.md
+│   │   └── sysroot
+│   │       ├── etc
+│   │       │   └── skel
+│   │       └── usr
+│   │           └── share
+│   │               └── backgrounds
+│   │                   └── colibri
+│   │                       ├── 3794764350_2839ca0b26_b.jpg
+│   │                       └── credits.md
+│   ├── duck
+│   │   ├── arch.yaml
+│   │   ├── debian.yaml
+│   │   ├── fedora.yaml
+│   │   ├── sysroot
+│   │   │   ├── etc
+│   │   │   │   └── skel
+│   │   │   └── usr
+│   │   │       └── share
+│   │   │           └── backgrounds
+│   │   │               └── duck
+│   │   │                   ├── 6819323284_e1ee501d4e_b.jpg
+│   │   │                   └── credits.md
+│   │   └── ubuntu.yaml
+│   ├── eagle
+│   │   ├── debian.yaml
+│   │   ├── pve-live.sh
+│   │   └── sysroot
+│   │       ├── etc
+│   │       │   └── skel
+│   │       └── usr
+│   │           └── share
+│   │               └── backgrounds
+│   │                   └── eagle
+│   │                       ├── 38064032662_83c2250d7f_h.jpg
+│   │                       └── credits.md
+│   ├── eagle-arm64
+│   │   ├── debian.yaml
+│   │   ├── pve-live.sh
+│   │   ├── README.md
+│   │   └── sysroot
+│   │       ├── etc
+│   │       │   ├── apt
+│   │       │   │   └── trusted.gpg.d
+│   │       │   │       └── pveport.gpg
+│   │       │   └── skel
+│   │       └── usr
+│   │           └── share
+│   │               └── backgrounds
+│   │                   └── eagle
+│   │                       ├── 38064032662_83c2250d7f_h.jpg
+│   │                       └── credits.md
+│   ├── gypaetus
+│   │   ├── debian.yaml
+│   │   ├── README.md
+│   │   └── sysroot
+│   │       ├── etc
+│   │       │   └── skel
+│   │       └── usr
+│   │           └── share
+│   │               └── backgrounds
+│   │                   └── gypaetus
+│   │                       ├── credits.md
+│   │                       └── gipeto-casses-blanches.jpg
+│   ├── owl
+│   │   ├── debian.yaml
+│   │   ├── fedora.yaml
+│   │   ├── sysroot
+│   │   │   ├── etc
+│   │   │   │   └── skel
+│   │   │   └── usr
+│   │   │       └── share
+│   │   │           └── backgrounds
+│   │   │               └── owl
+│   │   │                   ├── 37161836845_af56317fda_h.jpg
+│   │   │                   └── credits.md
+│   │   └── ubuntu.yaml
+│   └── seagull
+│       ├── arch.yaml
+│       ├── debian.yaml
+│       ├── README.md
+│       ├── sysroot
+│       │   ├── etc
+│       │   │   └── skel
+│       │   └── usr
+│       │       └── share
+│       │           ├── applications
+│       │           │   └── install-to-waydroid.desktop
+│       │           └── backgrounds
+│       │               └── wagtail
+│       │                   └── wagtail.jpg
+│       └── ubuntu.yaml
+├── DOCS
+│   └── wardrobe-users-guide.md
+├── LICENSE
+├── penguins-wardrobe.png
+├── README.md
+├── scripts
+│   ├── config_desktop_link.sh
+│   ├── config_g4.sh
+│   ├── config_gdm3.sh
+│   ├── config_lightdm.sh
+│   ├── g4
+│   │   ├── g4artisan
+│   │   ├── g4clone
+│   │   ├── g4eggs-log
+│   │   ├── g4passwd
+│   │   ├── g4tagadd
+│   │   ├── g4tagdel
+│   │   └── g4tagmove
+│   ├── hostname-pve.sh
+│   └── hostname.sh
+├── servers
+│   └── lamp
+│       ├── debian.yaml
+│       └── dirs
+│           └── var
+│               └── www
+│                   └── html
+│                       └── info.php
+└── vendors
+    ├── abuntu
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   ├── abuntu-logo.svg
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── abuntu-logo.png
+    │       │   │   ├── background.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── icon.png
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── slide2.png
+    │       │   │   ├── slide3.png
+    │       │   │   ├── slide4.png
+    │       │   │   ├── slide5.png
+    │       │   │   ├── slide6.png
+    │       │   │   ├── slide7.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.conf
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── blendos
+    │   ├── README.md
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── 1-reproductive-system.png
+    │       │   │   ├── 2-start-reproduction.png
+    │       │   │   ├── 3-its-your-system.png
+    │       │   │   ├── 4-eggs-presentation.png
+    │       │   │   ├── 5-wait-hatching.png
+    │       │   │   ├── 6-follow-penguins.png
+    │       │   │   ├── 7-created-by.png
+    │       │   │   ├── blendos-logo.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── show.qml
+    │       │   │   └── welcome.png
+    │       │   ├── calamares-modules
+    │       │   │   └── cfs-akshara
+    │       │   │       ├── cfs-akshara.sh
+    │       │   │       └── module.yaml
+    │       │   ├── cfs.yaml
+    │       │   └── modules
+    │       │       ├── locale.yaml
+    │       │       ├── partition.yaml
+    │       │       └── _users.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── bliss
+    │   ├── README.md
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── bliss-logo.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── languages.png
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── slide2.png
+    │       │   │   ├── slide3.png
+    │       │   │   └── welcome.png
+    │       │   ├── calamares-modules
+    │       │   │   ├── cfs-bootloader
+    │       │   │   │   ├── cfs-bootloader.sh
+    │       │   │   │   └── module.yaml
+    │       │   │   ├── cfs-data-img
+    │       │   │   │   ├── cfs-data-img.sh
+    │       │   │   │   └── module.yaml
+    │       │   │   └── cfs-install
+    │       │   │       ├── cfs-install.sh
+    │       │   │       └── module.yaml
+    │       │   ├── cfs.yaml
+    │       │   └── modules
+    │       │       └── partition.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           ├── README.md
+    │           └── splash.png
+    ├── educaandos-plus
+    │   ├── LICENSE
+    │   ├── penguins-eggs.d
+    │   │   ├── eggs.yaml
+    │   │   └── tools.yaml
+    │   ├── README.md
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── educaandos-plus-logo.png
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── slide2.png
+    │       │   │   ├── slide3.png
+    │       │   │   ├── slide4.png
+    │       │   │   ├── slide5.png
+    │       │   │   ├── slide6.png
+    │       │   │   ├── slide7.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       ├── locale.yaml
+    │       │       ├── partition.yaml
+    │       │       └── users.yaml
+    │       ├── livecd
+    │       │   ├── grub.theme.cfg
+    │       │   ├── isolinux.theme.cfg
+    │       │   ├── menu.template.cfg
+    │       │   └── splash.png
+    │       └── README.md
+    ├── glenn
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── 1-reproductive-system.png
+    │       │       ├── 2-start-reproduction.png
+    │       │       ├── 3-its-your-system.png
+    │       │       ├── 4-eggs-presentation.png
+    │       │       ├── 5-wait-hatching.png
+    │       │       ├── 6-follow-penguins.png
+    │       │       ├── 7-created-by.png
+    │       │       ├── glenn-logo.png
+    │       │       ├── show.qml
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── lastos
+    │   ├── lastos.yaml
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── 1-reproductive-system.png
+    │       │       ├── 2-start-reproduction.png
+    │       │       ├── 3-its-your-system.png
+    │       │       ├── 4-eggs-presentation.png
+    │       │       ├── 5-wait-hatching.png
+    │       │       ├── 6-follow-penguins.png
+    │       │       ├── 7-created-by.png
+    │       │       ├── branding.desc
+    │       │       ├── lastos-logo.png
+    │       │       ├── show.qml
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── linuxfx
+    │   ├── patch
+    │   │   ├── apply.sh
+    │   │   ├── linuxfx-links-add.desktop
+    │   │   ├── linuxfx-links-add.sh
+    │   │   ├── README.md
+    │   │   └── xdg-user-dirs.desktop
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   ├── install-system.png
+    │       │   └── README.md
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── kde.png
+    │       │   │   ├── linuxfx-logo.png
+    │       │   │   ├── neon.png
+    │       │   │   ├── plasma.png
+    │       │   │   ├── secure.png
+    │       │   │   ├── show.qml
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.conf
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── neon
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── kde.png
+    │       │   │   ├── neon-logo.png
+    │       │   │   ├── neon.png
+    │       │   │   ├── plasma.png
+    │       │   │   ├── secure.png
+    │       │   │   ├── show.qml
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.conf
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── nexa
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── banner.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── LICENSE
+    │       │   │   ├── nexa-logo.png
+    │       │   │   ├── README.md
+    │       │   │   ├── show.qml
+    │       │   │   ├── slideshow
+    │       │   │   │   ├── step1.png
+    │       │   │   │   ├── step2.png
+    │       │   │   │   └── step3.png
+    │       │   │   ├── wallpaper.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.conf
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── parrot
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── background.jpg
+    │       │       ├── branding.desc
+    │       │       ├── community.png
+    │       │       ├── dev.png
+    │       │       ├── learn.png
+    │       │       ├── parrot-logo.png
+    │       │       ├── privacy.png
+    │       │       ├── security.png
+    │       │       ├── server.png
+    │       │       ├── show.qml
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── pep
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── branding.desc
+    │       │       ├── pep-logo.png
+    │       │       ├── s5.png
+    │       │       ├── show.qml
+    │       │       ├── stylesheet.qss
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── predator
+    │   ├── predator.yaml
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── branding.desc
+    │       │       ├── predator-logo.png
+    │       │       ├── show.qml
+    │       │       ├── slide_10.png
+    │       │       ├── slide_11.png
+    │       │       ├── slide_12.png
+    │       │       ├── slide_13.png
+    │       │       ├── slide_1.png
+    │       │       ├── slide_2.png
+    │       │       ├── slide_3.png
+    │       │       ├── slide_4.png
+    │       │       ├── slide_5.png
+    │       │       ├── slide_6.png
+    │       │       ├── slide_7.png
+    │       │       ├── slide_8.png
+    │       │       ├── slide_9.png
+    │       │       └── welcome.png
+    │       ├── install-system.png
+    │       └── livecd
+    │           ├── grub.main.cfg
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.main.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── purpl3
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── branding.desc
+    │       │       ├── purpl3-logo.png
+    │       │       ├── show.qml
+    │       │       ├── slide_1.png
+    │       │       ├── slide_2.png
+    │       │       ├── slide_3.png
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── pve
+    │   ├── README.md
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── eagle.png
+    │       │   │   ├── pve-logo.png
+    │       │   │   ├── show.qml
+    │       │   │   └── welcome.png
+    │       │   ├── calamares-modules
+    │       │   │   ├── cfs-keygen
+    │       │   │   │   ├── cfs-keygen.sh
+    │       │   │   │   └── module.yaml
+    │       │   │   ├── cfs-network-dhcp
+    │       │   │   │   ├── cfs-network-dhcp.sh
+    │       │   │   │   └── module.yaml
+    │       │   │   └── cfs-pvelocalhost
+    │       │   │       ├── cfs-pvelocalhost.sh
+    │       │   │       └── module.yaml
+    │       │   ├── cfs.yaml
+    │       │   └── modules
+    │       │       ├── locale.yaml
+    │       │       ├── partition.yaml
+    │       │       └── users.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── quirinux
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── lang
+    │       │   │   │   ├── calamares-show-de_DE.qm
+    │       │   │   │   ├── calamares-show-en_GB.qm
+    │       │   │   │   ├── calamares-show-es_AR.qm
+    │       │   │   │   ├── calamares-show-es_ES.qm
+    │       │   │   │   ├── calamares-show-fr_FR.qm
+    │       │   │   │   ├── calamares-show-gl_ES.qm
+    │       │   │   │   ├── calamares-show-it_IT.qm
+    │       │   │   │   ├── calamares-show-pt_PT.qm
+    │       │   │   │   ├── calamares-show-ru_RU.qm
+    │       │   │   │   └── calmares-show-pt_BR.qm
+    │       │   │   ├── quirinux-logo.png
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       ├── partition.yaml
+    │       │       └── users.yaml
+    │       └── livecd
+    │           ├── grub.main.cfg
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.main.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── rhino
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   ├── install-system.png
+    │       │   └── rhino-logo.svg
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── Base.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── icon.png
+    │       │   │   ├── rhino-logo.png
+    │       │   │   ├── rhinopkg.png
+    │       │   │   ├── show.qml
+    │       │   │   ├── waves.png
+    │       │   │   ├── welcome.png
+    │       │   │   ├── Wizard.png
+    │       │   │   └── XFCE.png
+    │       │   └── modules
+    │       │       └── partition.conf
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── spiral
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── spiral-logo.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── REMOVED_partition.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── syslinuxos
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── 1-reproductive-system.png
+    │       │   │   ├── 2-start-reproduction.png
+    │       │   │   ├── 3-its-your-system.png
+    │       │   │   ├── 4-syslinuxos-presentation.png
+    │       │   │   ├── 5-wait-hatching.png
+    │       │   │   ├── 6-follow-penguins.png
+    │       │   │   ├── 7-created-by.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── show.qml
+    │       │   │   ├── syslinuxos-logo.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    ├── telos
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── banner.png
+    │       │   │   ├── branding.desc
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── telos-logo.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.yaml
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           ├── README.md -> ../../../eggs/theme/livecd/README.md
+    │           └── splash.png
+    ├── ufficiozero
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   ├── branding
+    │       │   │   ├── branding.desc
+    │       │   │   ├── README.md
+    │       │   │   ├── show.qml
+    │       │   │   ├── slide1.png
+    │       │   │   ├── slide2.png
+    │       │   │   ├── slide3.png
+    │       │   │   ├── slide4.png
+    │       │   │   ├── slide5.png
+    │       │   │   ├── slide6.png
+    │       │   │   ├── ufficiozero-logo.png
+    │       │   │   └── welcome.png
+    │       │   └── modules
+    │       │       └── partition.yaml
+    │       ├── livecd
+    │       │   ├── grub.theme.cfg
+    │       │   ├── isolinux.theme.cfg
+    │       │   ├── README.md
+    │       │   └── splash.png
+    │       └── README.md
+    ├── vw-excalibur
+    │   └── theme
+    │       ├── applications
+    │       │   └── install-system.desktop
+    │       ├── artwork
+    │       │   └── install-system.png
+    │       ├── calamares
+    │       │   └── branding
+    │       │       ├── actualizador.png
+    │       │       ├── branding.desc
+    │       │       ├── escritorio.png
+    │       │       ├── htop.png
+    │       │       ├── show.qml
+    │       │       ├── vw-excalibur-logo.png
+    │       │       └── welcome.png
+    │       └── livecd
+    │           ├── grub.theme.cfg
+    │           ├── isolinux.theme.cfg
+    │           └── splash.png
+    └── waydroid
+        └── theme
+            ├── applications
+            │   └── install-system.desktop
+            ├── artwork
+            │   └── install-system.png
+            ├── calamares
+            │   ├── branding
+            │   │   ├── branding.desc
+            │   │   ├── languages.png
+            │   │   ├── show.qml
+            │   │   ├── slide1.png
+            │   │   ├── slide2.png
+            │   │   ├── slide3.png
+            │   │   ├── waydroid-logo.png
+            │   │   └── welcome.png
+            │   └── modules
+            │       └── partition.yaml
+            └── livecd
+                ├── grub.theme.cfg
+                ├── isolinux.theme.cfg
+                ├── README.md -> ../../../eggs/theme/livecd/README.md
+                └── splash.png
+
+315 directories, 531 files

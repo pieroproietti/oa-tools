@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# 1. Controlla se è stato passato un argomento
+if [ -z "$1" ]; then
+    echo "❌ Errore: Devi specificare un nome per il tag."
+    echo "Uso: $0 <versione_tag>"
+    exit 1
+fi
+
+INPUT_TAG=$1
+TAG_NAME=""
+
+# 2. Controlla se il tag inizia già con 'v'
+if [[ $INPUT_TAG == v* ]]; then
+    TAG_NAME=$INPUT_TAG
+else
+    echo "Aggiungo il prefisso 'v' al tag '$INPUT_TAG'."
+    TAG_NAME="v$INPUT_TAG"
+fi
+
+echo "Operazione in corso sul tag: $TAG_NAME"
+echo "-------------------------------------"
+
+# 3. Esegui i comandi Git in modo sicuro
+# L'operatore '&&' assicura che lo script si fermi se un comando fallisce.
+git tag -f $TAG_NAME HEAD && \
+git push --delete origin $TAG_NAME && \
+git push origin $TAG_NAME
+
+# Controlla l'esito del comando precedente
+if [ $? -eq 0 ]; then
+    echo "✅ Fatto! Il tag '$TAG_NAME' è stato spostato sull'ultimo commit."
+else
+    echo "❌ Errore durante l'esecuzione dei comandi Git."
+fi

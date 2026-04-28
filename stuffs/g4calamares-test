@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# Script per eseguire Calamares in modalità debug, salvare il log
+# e copiare log e configurazioni su un server remoto,
+# pulendo la directory di destinazione prima della copia.
+#
+
+# --- Impostazioni ---
+# Termina lo script immediatamente se un comando fallisce o se si usa una variabile non definita.
+set -euo pipefail
+
+# -- Variabili di configurazione --
+REMOTE_USER="artisan"
+REMOTE_HOST="192.168.1.2"
+LOCAL_CONFIG_DIR="/etc/calamares"
+
+# --- Logica dello Script ---
+
+# 1. Ottieni l'ID della distribuzione
+echo "INFO: Rilevamento dell'ID della distribuzione..."
+if [ -f /etc/os-release ]; then
+    source /etc/os-release
+else
+    echo "ERRORE: Impossibile trovare /etc/os-release. Uscita."
+    exit 1
+fi
+echo "INFO: Rilevata distribuzione '${ID}'."
+
+# 2. Definisci i percorsi
+LOG_FILE="calamares.${ID}.log.txt"
+REMOTE_DEST_DIR="/home/${REMOTE_USER}/${ID}"
+
+# 3. Esegui Calamares e crea il log
+echo "INFO: Avvio di Calamares in modalità debug (potrebbe essere richiesta la password sudo)..."
+sudo calamares -d | tee "${LOG_FILE}"
+echo "INFO: Calamares ha terminato. Log salvato in '${LOG_FILE}'."
+
+# 4. Pulisci e ricrea la directory remota (la tua richiesta)
+echo "INFO: Pulizia della directory remota: ${REMOTE_HOST}:${REMOTE_DEST_DIR}"
+ssh "${REMOTE_USER}@${REMOTE_HOST}" "rm -rf '${REMOTE_DEST_DIR}' && mkdir -p '${REMOTE_DEST_DIR}'"
+
+# 5. Copia i file in modo efficiente
+echo "INFO: Copia del log e della configurazione su server remoto..."
+# Usiamo rsync perché è più efficiente e gestisce tutto in un unico comando.
+rsync -avz --info=progress2 "${LOG_FILE}" "${LOCAL_CONFIG_DIR}/" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DEST_DIR}/"
+
+# 6. Pulizia locale (opzionale)
+# echo "INFO: Pulizia del file di log locale..."
+# rm "${LOG_FILE}"
+
+echo "SUCCESSO: Operazione completata."
+
+exit 0

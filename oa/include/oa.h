@@ -50,6 +50,9 @@ char *read_file(const char *filename);
 #define CLR_YELLOW  "\033[1;33m"
 #define CLR_RESET   "\033[0m"
 
+// Dichiarazione esterna della variabile globale
+extern FILE *oa_log_file;
+
 // Tag standardizzati
 #define TAG_OA      CLR_CYAN "[oa]" CLR_RESET
 #define TAG_ERR     CLR_RED "[ERRORE]" CLR_RESET

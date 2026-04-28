@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# Extract the version number from package.json
+tab=$(node -pe "require('./package.json').version")
+
+# Check if the version number was successfully extracted
+if [ -z "$tab" ]; then
+  echo "Failed to extract version number from package.json"
+  exit 1
+fi
+
+# Delete the existing tag
+g4tagdel "$tab"
+
+# Check if the delete operation was successful
+if [ $? -ne 0 ]; then
+  echo "Failed to delete tag $tab"
+  exit 1
+fi
+
+# Add the new tag
+g4tagadd "$tab"
+
+# Check if the add operation was successful
+if [ $? -ne 0 ]; then
+  echo "Failed to add tag $tab"
+  exit 1
+fi
+
+echo "Tag operations completed successfully"

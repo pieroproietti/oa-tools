@@ -5,9 +5,10 @@ VERSION ?= 0.0.0-dev
 
 CC = gcc
 # Aggiunto -DOA_VERSION con il valore della variabile VERSION
-# Notare i backslash per passare le virgolette alla stringa C
 CFLAGS = -Wall -Wextra -Iinclude -D_GNU_SOURCE -Wno-format-truncation -DOA_VERSION=\"$(VERSION)\"
-LDFLAGS = -lm
+
+# --- MODIFICA QUI: Aggiunto -lcrypt ---
+LDFLAGS = -lm -lcrypt
 
 # Struttura delle cartelle
 SRC_DIR = src
@@ -17,7 +18,7 @@ INC_DIR = include
 # Trova tutti i file .c ricorsivamente in src/
 SOURCES = $(shell find $(SRC_DIR) -name '*.c')
 
-# Mappa i sorgenti agli oggetti (es: src/utils/logger.c -> obj/utils/logger.o)
+# Mappa i sorgenti agli oggetti
 OBJECTS = $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 # Nome del binario finale

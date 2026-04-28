@@ -9,14 +9,6 @@ import (
 	"strings"
 )
 
-// --- SISTEMA DI LOGGING DEL BUILDER ---
-const (
-	ColorCyan  = "\033[1;36m"
-	ColorBlue  = "\033[1;34m"
-	ColorRed   = "\033[1;31m"
-	ColorReset = "\033[0m"
-)
-
 func LogBuild(format string, a ...interface{}) {
 	msg := fmt.Sprintf(format, a...)
 	fmt.Printf("%s[build]%s %s\n", ColorBlue, ColorReset, msg)

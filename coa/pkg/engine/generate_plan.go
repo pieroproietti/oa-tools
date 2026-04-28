@@ -1,19 +1,22 @@
 package engine
 
 import (
-	"coa/pkg/pilot" // Importiamo i tipi definiti nel pilota
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"coa/pkg/pilot"
 )
 
-func GeneratePlan(yamlSteps []pilot.YamlStep, familyID string, isRemaster bool, workPath string) error {
+// GeneratePlan converte lo YAML in JSON. Ora accetta anche stopAfter!
+func GeneratePlan(yamlSteps []pilot.YamlStep, familyID string, isRemaster bool, workPath string, finalIsoPath string, stopAfter string) (string, error) {
 	var plan OAPlan
 
-	// Definiamo l'utente classico "live/live"
-	// In futuro questo verrà da pilot.LoadConfig()
 	defaultUser := pilot.User{
 		Login:    "live",
-		Password: "$6$rounds=4096$salt$UQ7.P... (hash di 'live')",
+		Password: "$6$oa-tools$uTKAYeAVn.Y.Dy2To6HXsHt1Gt4HpMghmOV93a46jFY7hkAQ3tk7eRTKjcvSYDf5sOf3qnKzyyPYXurKp9ST3.",
 		Home:     "/home/live",
 		Shell:    "/bin/bash",
 		Groups:   []string{"sudo", "audio", "video", "cdrom", "plugdev", "netdev"},
@@ -21,11 +24,29 @@ func GeneratePlan(yamlSteps []pilot.YamlStep, familyID string, isRemaster bool, 
 		GID:      1000,
 	}
 
+	var hitBreakpoint bool
+
 	for _, step := range yamlSteps {
+
+		if hitBreakpoint && step.Name != "coa-cleanup" {
+			continue
+		}
+
+		// --- IL PONTE: Sostituzione dinamica del percorso ISO ---
+		currentRunCommand := step.RunCommand
+		if strings.Contains(currentRunCommand, "${ISO_OUTPUT}") {
+			currentRunCommand = strings.ReplaceAll(currentRunCommand, "${ISO_OUTPUT}", finalIsoPath)
+		}
+
+		// --- INFO DINAMICA: Mostriamo il nome reale nel log ---
+		currentDescription := step.Description
+		if strings.Contains(currentDescription, "${ISO_NAME}") {
+			currentDescription = strings.ReplaceAll(currentDescription, "${ISO_NAME}", filepath.Base(finalIsoPath))
+		}
+
 		switch step.Command {
 
 		case "oa_mount_logic":
-			// Esplode la vecchia logica del C in tanti task JSON
 			plan.Plan = append(plan.Plan, expandMountLogic(workPath)...)
 
 		case "oa_users":
@@ -50,26 +71,44 @@ func GeneratePlan(yamlSteps []pilot.YamlStep, familyID string, isRemaster bool, 
 			})
 
 		default:
-			// Passaggio diretto dallo YAML al JSON (permette a debian.yaml di chiamare qualsiasi verbo C)
 			plan.Plan = append(plan.Plan, OATask{
-				Command:    step.Command, // <--- Usa il comando originale dello YAML!
-				Info:       step.Description,
-				RunCommand: step.RunCommand,
+				Command:    step.Command,
+				Info:       currentDescription, // Usiamo la descrizione risolta
+				RunCommand: currentRunCommand,  // IMPORTANTE: Usiamo il comando risolto!
 				Chroot:     step.Chroot,
 				PathLiveFs: workPath,
-				Path:       step.Path, // <--- Passa il parametro
-				Src:        step.Src,  // <--- Passa il parametro
-				Dst:        step.Dst,  // <--- Passa il parametro
+				Path:       step.Path,
+				Src:        step.Src,
+				Dst:        step.Dst,
 			})
+		}
+
+		if stopAfter != "" && step.Name == stopAfter {
+			fmt.Printf("\n\033[1;33m[ENGINE] 🛑 Breakpoint '%s' elaborato. Generazione JSON accorciata.\033[0m\n", step.Name)
+			hitBreakpoint = true
 		}
 	}
 
-	// Scrittura del file JSON finale
 	return savePlan(plan)
 }
 
-func savePlan(plan OAPlan) error {
-	os.MkdirAll("/tmp/coa", 0755)
-	file, _ := json.MarshalIndent(plan, "", "  ")
-	return os.WriteFile("oa-plan.json", file, 0644)
+func savePlan(plan OAPlan) (string, error) {
+	targetDir := "/tmp/coa"
+	targetFile := "oa-plan.json"
+	fullPath := filepath.Join(targetDir, targetFile)
+
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return "", err
+	}
+
+	file, err := json.MarshalIndent(plan, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	if err := os.WriteFile(fullPath, file, 0644); err != nil {
+		return "", err
+	}
+
+	return fullPath, nil
 }

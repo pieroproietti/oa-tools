@@ -1,0 +1,3 @@
+#!/bin/sh
+g4tagdel $1
+g4tagadd $1

@@ -1,34 +1,29 @@
 package cmd
 
 import (
-	"os"
-
-	"coa/pkg/calamares"
-
+	"coa/pkg/pilot"
+	"coa/pkg/utils"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var sysinstallCmd = &cobra.Command{
 	Use:   "sysinstall",
-	Short: "Launch the graphical system installer (Calamares + OA)",
-	Long: `The 'sysinstall' command prepares the environment and launches 
-the Calamares graphical installer. Once the GUI finishes partitioning 
-and unpacking, the OA engine will take over to finalize the bootloader.`,
-	Example: `  # Launch the system installer
-  sudo coa sysinstall`,
+	Short: "Lancia l'installatore di sistema (GUI o TUI)",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Controllo permessi (coa deve girare come root)
 		CheckSudoRequirements(cmd.Name(), true)
 
-		LogCoala("Preparazione ambiente e avvio di Calamares...")
-
-		// Affidiamo tutto al configuratore nel nuovo pacchetto pkg/calamares
-		err := calamares.SetupAndLaunch()
+		// 1. Caricamento del profilo tramite il Pilot
+		profile, err := pilot.DetectAndLoad()
 		if err != nil {
-			LogError("L'installazione si è interrotta: %v", err)
+			utils.LogError("Impossibile caricare il profilo: %v", err)
 			os.Exit(1)
 		}
 
-		LogSuccess("Installazione completata! Il sistema è pronto per il riavvio.")
+		// 2. Scelta dell'installatore (per ora forziamo Calamares)
+		// Qui passiamo il 'profile' che abbiamo appena caricato!
+		RunCalamaresInstaller(profile)
 	},
 }
 

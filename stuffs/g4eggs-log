@@ -1,0 +1,2 @@
+#!/bin/bash
+eggs $1 $2 $3 $4 $5 --verbose | tee eggs-$1.log

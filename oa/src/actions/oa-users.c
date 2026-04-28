@@ -4,9 +4,17 @@
 #include <shadow.h>
 #include <crypt.h>
 #include <pwd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
+/**
+ * oa_users: Gestione delle identità nel nido.
+ * Implementa la logica di Purge (rimozione utenti host) e Inject (creazione utente live).
+ */
 int oa_users(OA_Context *ctx) {
-    // 1. Lookup dei percorsi
+    // 1. Lookup dei percorsi e parametri
     cJSON *pathLiveFs = cJSON_GetObjectItemCaseSensitive(ctx->task, "pathLiveFs");
     if (!pathLiveFs) pathLiveFs = cJSON_GetObjectItemCaseSensitive(ctx->root, "pathLiveFs");
     
@@ -17,7 +25,7 @@ int oa_users(OA_Context *ctx) {
     const char *mode = cJSON_IsString(mode_item) ? mode_item->valuestring : "standard";
 
     if (!cJSON_IsString(pathLiveFs)) {
-        LOG_ERR("oa_users: pathLiveFs mancante");
+        LOG_ERR("oa_users: pathLiveFs mancante o non valido nel JSON");
         return 1;
     }
 
@@ -29,7 +37,7 @@ int oa_users(OA_Context *ctx) {
 
     LOG_INFO("Inizio gestione utenti in modalità: %s", mode);
 
-    // 2. PULIZIA
+    // 2. PULIZIA (Sanitize): Rimuove gli utenti "umani" dell'host per lasciare il sistema pulito
     if (strcmp(mode, "clone") != 0 && strcmp(mode, "crypted") != 0) {
         LOG_INFO("Esecuzione sanitize identità host (modalità standard)...");
         yocto_sanitize_file(p_path, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MAX);
@@ -37,7 +45,7 @@ int oa_users(OA_Context *ctx) {
         yocto_sanitize_file(g_path, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MAX);
     }
 
-    // 3. SCRITTURA
+    // 3. INIEZIONE NUOVE IDENTITÀ
     if (cJSON_IsArray(users)) {
         FILE *fp = fopen(p_path, "a");
         FILE *fs = fopen(s_path, "a");
@@ -54,21 +62,28 @@ int oa_users(OA_Context *ctx) {
             const char *pass  = cJSON_GetObjectItemCaseSensitive(u, "password")->valuestring;
             const char *home  = cJSON_GetObjectItemCaseSensitive(u, "home")->valuestring;
             
-            // Logghiamo l'utente che stiamo creando
-            LOG_INFO("Creazione identità nativa: user='%s' home='%s'", login, home);
+            LOG_INFO("Creazione identità nativa: user='%s' home='%s' password:'%s'", login, home, pass);
 
-            // Scrittura (qui scriviamo la password, ma non la logghiamo!)
+            // --- GESTIONE PASSWORD (Hashing) ---
+            // Se la password non è già un hash (inizia con $), la criptiamo in SHA-512
+            char *final_pass = (char *)pass;
+            if (pass && pass[0] != '$') {
+                // $6$ indica SHA-512, "oa" è il salt.
+                final_pass = crypt(pass, "$6$oa$");
+            }
+
+            // Scrittura nei database di sistema nativi
             yocto_write_passwd(fp, login, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MIN, "live,,,", home, "/bin/bash");
-            yocto_write_shadow(fs, login, pass);
+            yocto_write_shadow(fs, login, final_pass);
 
-            // Gruppi secondari
+            // Aggiunta ai gruppi secondari (sudo, audio, video, ecc.)
             cJSON *groups_obj = cJSON_GetObjectItemCaseSensitive(u, "groups");
             if (cJSON_IsArray(groups_obj)) {
                 LOG_INFO("Aggiunta utente '%s' ai gruppi secondari...", login);
                 yocto_add_user_to_groups(g_path, login, groups_obj);
             }
 
-            // Home e Skel
+            // 4. CONFIGURAZIONE HOME DIRECTORY
             char full_home[PATH_SAFE];
             snprintf(full_home, sizeof(full_home), "%s%s", liveroot, home);
             
@@ -77,6 +92,7 @@ int oa_users(OA_Context *ctx) {
                 LOG_WARN("Attenzione: mkdir fallita per %s (errno: %d)", full_home, errno);
             }
 
+            // Esecuzione skel + chroot tramite comando shell (atomico)
             char home_cmd[CMD_MAX];
             snprintf(home_cmd, sizeof(home_cmd), 
                      "cp -a %s/etc/skel/. %s/ 2>/dev/null || true && chown -R %d:%d %s", 

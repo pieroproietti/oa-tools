@@ -1,0 +1,3 @@
+echo "git checkout master"
+echo "git branch -D gh-pages"
+echo "git push origin --delete gh-pages"
