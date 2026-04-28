@@ -11,10 +11,11 @@ type WardrobeInfo struct {
 
 // Suit corrisponde alla IMateria del tuo codice TS
 type Suit struct {
-	Name        string `yaml:"name"`
-	Description string `yaml:"description"`
-	Distro      string `yaml:"distro"`
-	Reboot      bool   `yaml:"reboot"`
+	Name        string   `yaml:"name"`
+	Accessories []string `yaml:"accessories"` // Deve corrispondere alla chiave nello YAML
+	Description string   `yaml:"description"`
+	Distro      string   `yaml:"distro"`
+	Reboot      bool     `yaml:"reboot"`
 	Sequence    struct {
 		Repositories struct {
 			Update       bool     `yaml:"update"`
