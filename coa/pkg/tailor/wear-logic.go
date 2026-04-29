@@ -57,7 +57,7 @@ func loadSuit(yamlFile string) (*Suit, error) {
 	return &suit, nil
 }
 
-// getAvailablePackages interroga il sistema per ottenere i pacchetti installabili
+// getAvailablePackages interroga il sistema per ottenere i pacchetti installabili (Debian)
 func getAvailablePackages() map[string]struct{} {
 	available := make(map[string]struct{})
 
@@ -87,7 +87,8 @@ func getAvailablePackages() map[string]struct{} {
 	return available
 }
 
-// installWithRetries filtra i pacchetti inesistenti prima dell'installazione
+// installWithRetries filtra i pacchetti inesistenti prima dell'installazione su Debian
+// o genera il prompt AI su altri sistemi.
 func installWithRetries(packages []string, retries int) {
 	if len(packages) == 0 {
 		return
@@ -99,21 +100,25 @@ func installWithRetries(packages []string, retries int) {
 		return
 	}
 
-	// 2. Filtriamo i pacchetti esistenti
+	// 2. Filtriamo i pacchetti esistenti per evitare che apt blocchi tutto
 	available := getAvailablePackages()
 	var toInstall []string
 	var missing []string
 
-	for _, pkg := range packages {
-		if _, ok := available[pkg]; ok {
-			toInstall = append(toInstall, pkg)
-		} else {
-			missing = append(missing, pkg)
+	if available != nil {
+		for _, pkg := range packages {
+			if _, ok := available[pkg]; ok {
+				toInstall = append(toInstall, pkg)
+			} else {
+				missing = append(missing, pkg)
+			}
 		}
+	} else {
+		toInstall = packages // Fallback se apt-cache fallisce
 	}
 
 	if len(missing) > 0 {
-		logToFile(fmt.Sprintf("ATTENZIONE: %d pacchetti non trovati nei repository e verranno saltati: %v", len(missing), missing))
+		logToFile(fmt.Sprintf("ATTENZIONE: %d pacchetti saltati (non trovati): %v", len(missing), missing))
 	}
 
 	if len(toInstall) == 0 {
@@ -137,16 +142,16 @@ func installWithRetries(packages []string, retries int) {
 	logToFile("❌ Errore critico durante l'installazione pacchetti dopo i tentativi.")
 }
 
-// printAiPrompt genera un prompt ricco di informazioni e crea il file AIPrompt.txt
+// printAiPrompt genera un prompt ricco di informazioni e crea il file AIPrompt.txt nella home
 func printAiPrompt(packages []string) {
 	d := distro.NewDistro()
 	logToFile(fmt.Sprintf("Sistema %s rilevato (Non-Debian). Generazione prompt e file AIPrompt.txt...", d.DistroLike))
 
-	// 1. Cattura info Hardware VGA/3D
+	// 1. Cattura info Hardware VGA/3D (fondamentale per driver e KMS)
 	gpuCmd := "lspci -k | grep -A 2 -E 'VGA|3D'"
 	gpuInfo, _ := exec.Command("sh", "-c", gpuCmd).Output()
 
-	// 2. Cattura sessioni X11 disponibili
+	// 2. Cattura sessioni X11 disponibili (per configurazione LightDM)
 	sessionCmd := "ls /usr/share/xsessions/ 2>/dev/null"
 	sessions, _ := exec.Command("sh", "-c", sessionCmd).Output()
 
@@ -160,7 +165,7 @@ func printAiPrompt(packages []string) {
 	if len(gpuInfo) > 0 {
 		sb.WriteString(string(gpuInfo))
 	} else {
-		sb.WriteString("Nessuna info VGA trovata.\n")
+		sb.WriteString("Nessuna info VGA trovata (pciutils non installato?).\n")
 	}
 
 	sb.WriteString("\nSESSIONI DESKTOP DISPONIBILI:\n")
@@ -175,15 +180,27 @@ func printAiPrompt(packages []string) {
 
 	promptContent := sb.String()
 
-	// 4. Stampa a video
+	// 4. Stampa a video per l'utente
 	fmt.Println("\n" + utils.ColorCyan + promptContent + utils.ColorReset)
 
-	// 5. Scrittura su file AIPrompt.txt
-	err := os.WriteFile("AIPrompt.txt", []byte(promptContent), 0644)
+	// 5. Scrittura su file AIPrompt.txt nella HOME reale dell'utente
+	userHome, _ := os.UserHomeDir()
+	sudoUser := os.Getenv("SUDO_USER")
+	if sudoUser != "" {
+		userHome = filepath.Join("/home", sudoUser)
+	}
+
+	promptFile := filepath.Join(userHome, "AIPrompt.txt")
+	err := os.WriteFile(promptFile, []byte(promptContent), 0644)
+
 	if err != nil {
 		logToFile(fmt.Sprintf("Errore durante la creazione di AIPrompt.txt: %v", err))
 	} else {
-		logToFile("✅ File AIPrompt.txt generato con successo nella cartella corrente.")
-		fmt.Printf("File di prompt generato: %sAIPrompt.txt%s\n\n", utils.ColorYellow, utils.ColorReset)
+		// Se siamo sotto sudo, ripristiniamo l'owner del file all'utente reale
+		if sudoUser != "" {
+			utils.Exec(fmt.Sprintf("sudo chown %s:%s %s", sudoUser, sudoUser, promptFile))
+		}
+		logToFile(fmt.Sprintf("✅ File AIPrompt.txt generato in: %s", promptFile))
+		fmt.Printf("File di prompt generato nella Home: %s%s%s\n\n", utils.ColorYellow, promptFile, utils.ColorReset)
 	}
 }
