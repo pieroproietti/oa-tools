@@ -4,23 +4,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	distroFlag string
-	jsonFlag   bool
-	noAccFlag  bool
-	noFirmFlag bool
-)
-
-var wardrobeCmd = &cobra.Command{
-	Use:   "wardrobe",
-	Short: "Gestisce e applica vestiti (costumi e accessori) al sistema",
+// Questa funzione viene chiamata automaticamente da Go
+func init() {
+	// Presumendo che il tuo comando radice si chiami 'rootCmd'
+	// Se nel tuo root.go si chiama in modo diverso (es. 'coaCmd'), usa quel nome
+	rootCmd.AddCommand(wardrobeCmd())
 }
 
-func init() {
-	// Aggiungi solo i comandi
-	wardrobeCmd.AddCommand(getCmd, listCmd, showCmd, wearCmd)
+func wardrobeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "wardrobe",
+		Short: "Gestione dei vestiti (costumes)",
+	}
 
-	// NON definire i flag qui se li definisci nei file dedicati!
+	// Attacchiamo i rami al comando wardrobe
+	cmd.AddCommand(wardrobeGetCmd())
+	cmd.AddCommand(wardrobeListCmd())
+	cmd.AddCommand(wardrobeShowCmd())
+	cmd.AddCommand(wardrobeWearCmd())
 
-	rootCmd.AddCommand(wardrobeCmd)
+	return cmd
 }

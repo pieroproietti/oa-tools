@@ -2,30 +2,26 @@ package cmd
 
 import (
 	"coa/pkg/tailor"
-	"coa/pkg/utils" // Usiamo utils per i log colorati
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
-var wearCmd = &cobra.Command{
-	Use:   "wear [COSTUME]",
-	Short: "Indossa un costume o accessorio dal wardrobe (richiede sudo)",
-	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		// 🚨 CONTROLLO PRIVILEGI: Se non sei root, ci fermiamo subito.
-		if os.Geteuid() != 0 {
-			utils.LogError("Questo comando deve essere eseguito con privilegi di root.")
-			utils.LogCoala("Prova a digitare: sudo coa wardrobe wear %s", args[0])
-			os.Exit(1)
-		}
+func wardrobeWearCmd() *cobra.Command {
+	var noAcc bool
+	var noFirm bool
 
-		costume := args[0]
+	cmd := &cobra.Command{
+		Use:   "wear [costume]",
+		Short: "Indossa un vestito (costume) dal guardaroba",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// Passiamo le flags alla funzione tailor.Wear
+			return tailor.Wear(args[0], noAcc, noFirm)
+		},
+	}
 
-		// Se arriviamo qui, siamo root.
-		if err := tailor.Wear(costume, noAccFlag, noFirmFlag); err != nil {
-			utils.LogError("Errore durante il Wear: %v", err)
-			os.Exit(1)
-		}
-	},
+	// Definiamo le flags qui
+	cmd.Flags().BoolVar(&noAcc, "no-acc", false, "Non installare gli accessori")
+	cmd.Flags().BoolVar(&noFirm, "no-firm", false, "Non installare il firmware")
+
+	return cmd
 }

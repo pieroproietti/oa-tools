@@ -5,130 +5,93 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
+// Wear è il punto di ingresso principale
 func Wear(costumeName string, noAcc bool, noFirm bool) error {
+	utils.LogCoala("Inizio procedura di vestizione per: %s", costumeName)
+
 	root, err := getWardrobeRoot()
 	if err != nil {
+		utils.LogError("Errore root guardaroba: %v", err)
 		return err
 	}
 
-	// 1. Caricamento del Costume principale
 	costumeDir := filepath.Join(root, "costumes", costumeName)
 	if _, err := os.Stat(costumeDir); os.IsNotExist(err) {
-		return fmt.Errorf("costume '%s' non trovato", costumeName)
+		return fmt.Errorf("costume '%s' non trovato in %s", costumeName, costumeDir)
 	}
 
-	yamlFile := findCompatibleYaml(costumeDir)
-	mainSuit, err := loadSuit(yamlFile)
+	yamlFile := findYaml(costumeDir)
+	suit, err := loadSuit(yamlFile)
 	if err != nil {
 		return err
 	}
 
-	utils.LogCoala("Sarto all'opera: inizio con il costume principale %s", mainSuit.Name)
-
-	// 2. 🧵 PRIMA IL COSTUME (La base del sistema)
-	if err := applySuit(costumeDir, mainSuit); err != nil {
-		return fmt.Errorf("errore critico durante l'installazione del costume: %v", err)
+	// 1. Applicazione del costume principale
+	utils.LogCoala("--- Applicazione Costume: %s ---", suit.Name)
+	if err := applySuit(costumeDir, suit); err != nil {
+		return err
 	}
 
-	// 3. 🎩 DOPO GLI ACCESSORI (Strumenti aggiuntivi)
-	if !noAcc && len(mainSuit.Accessories) > 0 {
-		utils.LogCoala("Configurazione base completata. Passo agli accessori...")
-
-		for _, accName := range mainSuit.Accessories {
-			utils.LogCoala("📦 Installazione accessorio: %s", accName)
-
+	// 2. Applicazione Accessori (se presenti e non disabilitati)
+	if !noAcc && len(suit.Accessories) > 0 {
+		utils.LogCoala("--- Elaborazione %d accessori ---", len(suit.Accessories))
+		for _, accName := range suit.Accessories {
 			accDir := filepath.Join(root, "accessories", accName)
-			if _, err := os.Stat(accDir); os.IsNotExist(err) {
-				utils.LogCoala("⚠️  Accessorio '%s' non trovato, salto.", accName)
-				continue
-			}
-
-			accYaml := findCompatibleYaml(accDir)
-			accSuit, err := loadSuit(accYaml)
-			if err != nil {
-				utils.LogCoala("⚠️  Errore caricamento accessorio %s: %v", accName, err)
-				continue
-			}
-
-			// Applichiamo l'accessorio
-			if err := applySuit(accDir, accSuit); err != nil {
-				utils.LogCoala("❌ Errore durante l'applicazione di %s: %v", accName, err)
+			if accYaml := findYaml(accDir); accYaml != "" {
+				if accSuit, err := loadSuit(accYaml); err == nil {
+					utils.LogCoala("Accessorio: %s", accName)
+					applySuit(accDir, accSuit)
+				}
 			}
 		}
 	}
 
-	// 3. LA CILIEGINA SULLA TORTA:
-    // Ora che /etc/skel è completa di tutto (sfondi di colibri, config di eggs-dev, ecc.)
-    // la copiamo nella home dell'utente corrente.
-    if err := copySkelToUser(); err != nil {
-        utils.LogError("Impossibile aggiornare la home utente: %v", err)
-    }
+	// 3. Chiusura: Sincronizzazione home
+	utils.LogCoala("--- Finalizzazione ---")
+	copySkelToUser()
 
-	utils.LogCoala("✅ Sistema 'confezionato' con successo!")
+	utils.LogCoala("✅ Vestizione completata con successo!")
 	return nil
 }
 
-// applySuit esegue la sequenza operativa definita nello YAML
+// applySuit esegue le tre fasi: Pacchetti, Overlay, Comandi
 func applySuit(dir string, suit *Suit) error {
-	utils.LogCoala("🧵 Cucitura componente: %s", suit.Name)
-
-	// Directory per i path relativi (../../scripts/)
-	originalWd, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(originalWd)
-
-	// A. Update Repository
-	if suit.Sequence.Repositories.Update {
-		utils.LogCoala("[%s] Aggiornamento repository...", suit.Name)
-		utils.ExecQuiet("apt-get update")
+	// Fase A: Pacchetti
+	if len(suit.Packages) > 0 {
+		utils.LogCoala("[%s] Tentativo installazione pacchetti: %v", suit.Name, suit.Packages)
+		installWithRetries(suit.Packages, 3)
+	} else {
+		utils.LogCoala("[%s] Nessun pacchetto da installare.", suit.Name)
 	}
 
-	// B. Unione dei pacchetti (Root + Sequence)
-	allPackages := append(suit.Packages, suit.Sequence.Packages...)
-	if len(allPackages) > 0 {
-		available := getAvailablePackages()
-		var toInstall []string
-		for _, pkg := range allPackages {
-			cleanPkg := strings.TrimSpace(pkg)
-			if _, ok := available[cleanPkg]; ok {
-				toInstall = append(toInstall, cleanPkg)
-			} else {
-				utils.LogCoala("⚠️  [%s] Pacchetto non trovato: %s", suit.Name, cleanPkg)
-			}
-		}
-		if len(toInstall) > 0 {
-			installWithRetries(toInstall, 3)
-		}
-	}
-
-	// C. Sysroot / Dirs (La Paraculata) [cite: 2, 3, 9]
+	// Fase B: Overlay Sysroot
 	sysrootPath := filepath.Join(dir, "sysroot")
 	if _, err := os.Stat(sysrootPath); os.IsNotExist(err) {
-		sysrootPath = filepath.Join(dir, "dirs")
+		sysrootPath = filepath.Join(dir, "dirs") // Compatibilità col vecchio formato
 	}
 
 	if _, err := os.Stat(sysrootPath); err == nil {
-		utils.LogCoala("🚀 Riversamento configurazioni per %s...", suit.Name)
-		cmd := fmt.Sprintf("rsync -aHSX %s/ /", sysrootPath) // Il '/' finale è fondamentale 
-		utils.Exec(cmd)
+		utils.LogCoala("[%s] Trovata cartella overlay: %s", suit.Name, sysrootPath)
+		utils.LogCoala("[%s] Esecuzione rsync verso la radice /...", suit.Name)
+		
+		// Usiamo sudo rsync -aAXv per garantire il successo della "cucitura"
+		cmd := fmt.Sprintf("sudo rsync -aAXv %s/ /", sysrootPath)
+		if err := utils.Exec(cmd); err != nil {
+			utils.LogCoala("[%s] Errore durante l'overlay: %v", suit.Name, err)
+		} else {
+			utils.LogCoala("[%s] Overlay completato correttamente.", suit.Name)
+		}
+	} else {
+		utils.LogCoala("[%s] Nessuna cartella sysroot/dirs trovata, salto overlay.", suit.Name)
 	}
 
-	// D. Unione dei comandi (Root + Sequence + Finalize)
-	allCmds := append(suit.Cmds, suit.Sequence.Cmds...)
-	allCmds = append(allCmds, suit.Finalize.Cmds...)
-	
-	if len(allCmds) > 0 {
-		utils.LogCoala("[%s] Esecuzione script...", suit.Name)
-		for _, command := range allCmds {
-			if strings.Contains(command, "hostname.sh") {
-				// Ci assicuriamo di non duplicarlo se è già presente
-				if !strings.Contains(command, suit.Name) {
-					command = fmt.Sprintf("%s %s", command, suit.Name)
-				}
-			}
+	// Fase C: Comandi Post-Installazione
+	if len(suit.Cmds) > 0 {
+		utils.LogCoala("[%s] Esecuzione %d comandi post-installazione...", suit.Name, len(suit.Cmds))
+		for _, command := range suit.Cmds {
+			utils.LogCoala("[%s] Eseguo: %s", suit.Name, command)
 			utils.Exec(command)
 		}
 	}
@@ -136,38 +99,16 @@ func applySuit(dir string, suit *Suit) error {
 	return nil
 }
 
-func copySkelToUser() error {
-	// 1. Identifichiamo l'utente che ha lanciato sudo
-	sudoUser := os.Getenv("SUDO_USER")
-	if sudoUser == "" || sudoUser == "root" {
-		utils.LogCoala("Esecuzione non via sudo o come root, salto la copia della skel nella home.")
-		return nil
+// copySkelToUser sincronizza /etc/skel con la home dell'utente
+func copySkelToUser() {
+	userHome, _ := os.UserHomeDir()
+	
+	// Recuperiamo la home reale se siamo sotto sudo
+	if sudoUser := os.Getenv("SUDO_USER"); sudoUser != "" {
+		userHome = filepath.Join("/home", sudoUser)
 	}
-
-	// Recuperiamo la home directory dell'utente
-	userHome := fmt.Sprintf("/home/%s", sudoUser)
-	if sudoUser == "root" {
-		userHome = "/root"
-	}
-
-	utils.LogCoala("Cucitura finale: applico le configurazioni desktop alla home di %s...", sudoUser)
-
-	// 2. Usiamo rsync per copiare il contenuto di /etc/skel nella home dell'utente
-	// -a: archive mode
-	// Note: il '/' finale in /etc/skel/ è vitale per copiare il contenuto e non la cartella stessa
-	rsyncCmd := fmt.Sprintf("rsync -a /etc/skel/ %s/", userHome)
-	if err := utils.ExecQuiet(rsyncCmd); err != nil {
-		return fmt.Errorf("errore durante la copia della skel: %v", err)
-	}
-
-	// 3. Sistemiamo i permessi (chown)
-	// Essendo passati dalla sysroot del wardrobe a /etc/skel e poi alla home, 
-	// dobbiamo assicurarci che l'utente possa leggere e scrivere i propri file.
-	chownCmd := fmt.Sprintf("chown -R %s:%s %s", sudoUser, sudoUser, userHome)
-	if err := utils.ExecQuiet(chownCmd); err != nil {
-		return fmt.Errorf("errore durante il cambio di proprietà dei file: %v", err)
-	}
-
-	utils.LogCoala("✅ Configurazioni utente applicate correttamente.")
-	return nil
+	
+	utils.LogCoala("Sincronizzazione /etc/skel -> %s", userHome)
+	cmd := fmt.Sprintf("sudo rsync -a /etc/skel/ %s/", userHome)
+	utils.Exec(cmd)
 }

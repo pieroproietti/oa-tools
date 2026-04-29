@@ -1,0 +1,530 @@
+Linguaggio: Go / Pacchetto: Tailor
+Descrizione: Modulo per la gestione dei Wardrobe (index.yaml e sysroot)
+---
+
+### 📄 FILE: coa/pkg/tailor/get-wardrobe-root.go
+```go
+package tailor
+
+import (
+	"fmt"
+	"os"
+	"os/user"
+	"path/filepath"
+)
+
+func getWardrobeRoot() (string, error) {
+	var homeDir string
+
+	// 1. Controlliamo se siamo sotto sudo
+	sudoUser := os.Getenv("SUDO_USER")
+	if sudoUser != "" {
+		// Recuperiamo le informazioni dell'utente originale
+		u, err := user.Lookup(sudoUser)
+		if err == nil {
+			homeDir = u.HomeDir
+		}
+	}
+
+	// 2. Se non siamo sotto sudo o se il lookup è fallito,
+	// usiamo la home dell'utente corrente
+	if homeDir == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("impossibile determinare la home directory: %v", err)
+		}
+		homeDir = home
+	}
+
+	return filepath.Join(homeDir, ".oa-wardrobe"), nil
+}
+```
+
+### 📄 FILE: coa/pkg/tailor/list.go
+```go
+package tailor
+
+import (
+	"coa/pkg/distro" // Importante: serve per il rilevamento
+	"coa/pkg/utils"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
+func List(distroFilter string) error {
+	root, err := getWardrobeRoot()
+	if err != nil {
+		return err
+	}
+
+	utils.LogCoala("Esplorazione wardrobe in: %s", root)
+
+	// Recuperiamo la distro attuale per il confronto dell'asterisco
+	d := distro.NewDistro()
+	currentDistro := strings.ToLower(d.DistroLike)
+
+	categories := []string{"costumes", "accessories"}
+
+	for _, cat := range categories {
+		catPath := filepath.Join(root, cat)
+		entries, err := os.ReadDir(catPath)
+		if err != nil {
+			continue
+		}
+
+		fmt.Printf("\n--- %s ---\n", strings.ToUpper(cat))
+		for _, e := range entries {
+			if e.IsDir() {
+				costumePath := filepath.Join(catPath, e.Name())
+
+				// 1. Usiamo la logica di findCompatibleYaml (definita in wear_logic.go)
+				yamlPath := findCompatibleYaml(costumePath)
+
+				// 2. Fallback se non trova nulla di specifico
+				if yamlPath == "" {
+					yamlPath = findFirstYaml(costumePath)
+				}
+
+				if yamlPath != "" {
+					if data, err := os.ReadFile(yamlPath); err == nil {
+						var suit Suit
+						if err := yaml.Unmarshal(data, &suit); err == nil {
+
+							// Filtro distro (es: -d debian)
+							if distroFilter == "" || strings.Contains(strings.ToLower(suit.Distro), strings.ToLower(distroFilter)) {
+								status := ""
+
+								// Se il file caricato non contiene il nome della nostra distro, mettiamo l'asterisco
+								if !strings.Contains(strings.ToLower(yamlPath), currentDistro) {
+									status = utils.ColorRed + "*" + utils.ColorReset
+								}
+
+								fmt.Printf("  📦 %-15s | %s %s\n", e.Name(), suit.Description, status)
+							}
+						}
+					}
+				} else {
+					fmt.Printf("  📁 %-15s | (Nessun file .yaml trovato)\n", e.Name())
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func findFirstYaml(dir string) string {
+	files, _ := os.ReadDir(dir)
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".yaml") {
+			return filepath.Join(dir, f.Name())
+		}
+	}
+	return ""
+}
+```
+
+### 📄 FILE: coa/pkg/tailor/tailor.go
+```go
+package tailor
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+)
+
+func Get(repoURL string) error {
+	targetDir, err := getWardrobeRoot()
+	if err != nil {
+		return err
+	}
+
+	gitDir := filepath.Join(targetDir, ".git")
+	if _, err := os.Stat(gitDir); !os.IsNotExist(err) {
+		fmt.Println("♻️  Il wardrobe esiste già. Aggiornamento in corso...")
+		return exec.Command("git", "-C", targetDir, "pull").Run()
+	}
+
+	os.MkdirAll(targetDir, 0755)
+	fmt.Println("📥 Clonazione del nuovo wardrobe...")
+	return exec.Command("git", "clone", repoURL, targetDir).Run()
+}
+
+// Show ora accetta (costumeName, asJSON) per combaciare con wardrobe.go
+func Show(costumeName string, asJSON bool) error {
+	root, err := getWardrobeRoot()
+	if err != nil {
+		return err
+	}
+
+	costumePath := filepath.Join(root, "costumes", costumeName, "wardrobe.yaml")
+	fmt.Printf("📖 Analisi cartamodello: %s\n", costumePath)
+
+	// Se asJSON è true, qui andrà la logica per stampare la struct in JSON
+	if asJSON {
+		fmt.Println("[Modalità JSON attivata]")
+	}
+
+	return nil
+}
+```
+
+### 📄 FILE: coa/pkg/tailor/types.go
+```go
+package tailor
+
+import "coa/pkg/engine"
+
+// WardrobeInfo serve per il parsing veloce di List e Show
+type WardrobeInfo struct {
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Distro      string `yaml:"distro"`
+}
+
+// Suit corrisponde alla IMateria del tuo codice TS
+type Suit struct {
+	Name        string   `yaml:"name"`
+	Accessories []string `yaml:"accessories"` // Deve corrispondere alla chiave nello YAML
+	Description string   `yaml:"description"`
+	Packages    []string `yaml:"packages"` // <--- Aggiungi questo per il livello root
+	Cmds        []string `yaml:"cmds"`     // <--- Aggiungi questo per il livello root
+	Distro      string   `yaml:"distro"`
+	Reboot      bool     `yaml:"reboot"`
+	Sequence    struct {
+		Repositories struct {
+			Update       bool     `yaml:"update"`
+			Upgrade      bool     `yaml:"upgrade"`
+			SourcesList  []string `yaml:"sources_list"`
+			SourcesListD []string `yaml:"sources_list_d"`
+		} `yaml:"repositories"`
+		Packages       []string `yaml:"packages"`
+		PackagesPython []string `yaml:"packages_python"`
+		Cmds           []string `yaml:"cmds"`
+		Accessories    []string `yaml:"accessories"`
+	} `yaml:"sequence"`
+	Finalize struct {
+		Customize bool     `yaml:"customize"`
+		Cmds      []string `yaml:"cmds"`
+	} `yaml:"finalize"`
+	Dress []engine.OATask `yaml:"dress"`
+}
+```
+
+### 📄 FILE: coa/pkg/tailor/wear.go
+```go
+package tailor
+
+import (
+	"coa/pkg/utils"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func Wear(costumeName string, noAcc bool, noFirm bool) error {
+	root, err := getWardrobeRoot()
+	if err != nil {
+		return err
+	}
+
+	// 1. Caricamento del Costume principale
+	costumeDir := filepath.Join(root, "costumes", costumeName)
+	if _, err := os.Stat(costumeDir); os.IsNotExist(err) {
+		return fmt.Errorf("costume '%s' non trovato", costumeName)
+	}
+
+	yamlFile := findCompatibleYaml(costumeDir)
+	mainSuit, err := loadSuit(yamlFile)
+	if err != nil {
+		return err
+	}
+
+	utils.LogCoala("Sarto all'opera: inizio con il costume principale %s", mainSuit.Name)
+
+	// 2. 🧵 PRIMA IL COSTUME (La base del sistema)
+	if err := applySuit(costumeDir, mainSuit); err != nil {
+		return fmt.Errorf("errore critico durante l'installazione del costume: %v", err)
+	}
+
+	// 3. 🎩 DOPO GLI ACCESSORI (Strumenti aggiuntivi)
+	if !noAcc && len(mainSuit.Accessories) > 0 {
+		utils.LogCoala("Configurazione base completata. Passo agli accessori...")
+
+		for _, accName := range mainSuit.Accessories {
+			utils.LogCoala("📦 Installazione accessorio: %s", accName)
+
+			accDir := filepath.Join(root, "accessories", accName)
+			if _, err := os.Stat(accDir); os.IsNotExist(err) {
+				utils.LogCoala("⚠️  Accessorio '%s' non trovato, salto.", accName)
+				continue
+			}
+
+			accYaml := findCompatibleYaml(accDir)
+			accSuit, err := loadSuit(accYaml)
+			if err != nil {
+				utils.LogCoala("⚠️  Errore caricamento accessorio %s: %v", accName, err)
+				continue
+			}
+
+			// Applichiamo l'accessorio
+			if err := applySuit(accDir, accSuit); err != nil {
+				utils.LogCoala("❌ Errore durante l'applicazione di %s: %v", accName, err)
+			}
+		}
+	}
+
+	// 3. LA CILIEGINA SULLA TORTA:
+    // Ora che /etc/skel è completa di tutto (sfondi di colibri, config di eggs-dev, ecc.)
+    // la copiamo nella home dell'utente corrente.
+    if err := copySkelToUser(); err != nil {
+        utils.LogError("Impossibile aggiornare la home utente: %v", err)
+    }
+
+	utils.LogCoala("✅ Sistema 'confezionato' con successo!")
+	return nil
+}
+
+// applySuit esegue la sequenza operativa definita nello YAML
+func applySuit(dir string, suit *Suit) error {
+	utils.LogCoala("🧵 Cucitura componente: %s", suit.Name)
+
+	// Directory per i path relativi (../../scripts/)
+	originalWd, _ := os.Getwd()
+	os.Chdir(dir)
+	defer os.Chdir(originalWd)
+
+	// A. Update Repository
+	if suit.Sequence.Repositories.Update {
+		utils.LogCoala("[%s] Aggiornamento repository...", suit.Name)
+		utils.ExecQuiet("apt-get update")
+	}
+
+	// B. Unione dei pacchetti (Root + Sequence)
+	allPackages := append(suit.Packages, suit.Sequence.Packages...)
+	if len(allPackages) > 0 {
+		available := getAvailablePackages()
+		var toInstall []string
+		for _, pkg := range allPackages {
+			cleanPkg := strings.TrimSpace(pkg)
+			if _, ok := available[cleanPkg]; ok {
+				toInstall = append(toInstall, cleanPkg)
+			} else {
+				utils.LogCoala("⚠️  [%s] Pacchetto non trovato: %s", suit.Name, cleanPkg)
+			}
+		}
+		if len(toInstall) > 0 {
+			installWithRetries(toInstall, 3)
+		}
+	}
+
+	// C. Sysroot / Dirs (La Paraculata) [cite: 2, 3, 9]
+	sysrootPath := filepath.Join(dir, "sysroot")
+	if _, err := os.Stat(sysrootPath); os.IsNotExist(err) {
+		sysrootPath = filepath.Join(dir, "dirs")
+	}
+
+	if _, err := os.Stat(sysrootPath); err == nil {
+		utils.LogCoala("🚀 Riversamento configurazioni per %s...", suit.Name)
+		cmd := fmt.Sprintf("rsync -aHSX %s/ /", sysrootPath) // Il '/' finale è fondamentale 
+		utils.Exec(cmd)
+	}
+
+	// D. Unione dei comandi (Root + Sequence + Finalize)
+	allCmds := append(suit.Cmds, suit.Sequence.Cmds...)
+	allCmds = append(allCmds, suit.Finalize.Cmds...)
+	
+	if len(allCmds) > 0 {
+		utils.LogCoala("[%s] Esecuzione script...", suit.Name)
+		for _, command := range allCmds {
+			if strings.Contains(command, "hostname.sh") {
+				// Ci assicuriamo di non duplicarlo se è già presente
+				if !strings.Contains(command, suit.Name) {
+					command = fmt.Sprintf("%s %s", command, suit.Name)
+				}
+			}
+			utils.Exec(command)
+		}
+	}
+
+	return nil
+}
+
+func copySkelToUser() error {
+	// 1. Identifichiamo l'utente che ha lanciato sudo
+	sudoUser := os.Getenv("SUDO_USER")
+	if sudoUser == "" || sudoUser == "root" {
+		utils.LogCoala("Esecuzione non via sudo o come root, salto la copia della skel nella home.")
+		return nil
+	}
+
+	// Recuperiamo la home directory dell'utente
+	userHome := fmt.Sprintf("/home/%s", sudoUser)
+	if sudoUser == "root" {
+		userHome = "/root"
+	}
+
+	utils.LogCoala("Cucitura finale: applico le configurazioni desktop alla home di %s...", sudoUser)
+
+	// 2. Usiamo rsync per copiare il contenuto di /etc/skel nella home dell'utente
+	// -a: archive mode
+	// Note: il '/' finale in /etc/skel/ è vitale per copiare il contenuto e non la cartella stessa
+	rsyncCmd := fmt.Sprintf("rsync -a /etc/skel/ %s/", userHome)
+	if err := utils.ExecQuiet(rsyncCmd); err != nil {
+		return fmt.Errorf("errore durante la copia della skel: %v", err)
+	}
+
+	// 3. Sistemiamo i permessi (chown)
+	// Essendo passati dalla sysroot del wardrobe a /etc/skel e poi alla home, 
+	// dobbiamo assicurarci che l'utente possa leggere e scrivere i propri file.
+	chownCmd := fmt.Sprintf("chown -R %s:%s %s", sudoUser, sudoUser, userHome)
+	if err := utils.ExecQuiet(chownCmd); err != nil {
+		return fmt.Errorf("errore durante il cambio di proprietà dei file: %v", err)
+	}
+
+	utils.LogCoala("✅ Configurazioni utente applicate correttamente.")
+	return nil
+}```
+
+### 📄 FILE: coa/pkg/tailor/wear_logic.go
+```go
+package tailor
+
+import (
+	"bufio"
+	"coa/pkg/distro"
+	"coa/pkg/utils"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+// findCompatibleYaml cerca il file YAML più adatto basandosi sulla distro attuale.
+func findCompatibleYaml(costumePath string) string {
+	// Usiamo la sintassi corretta del tuo pacchetto distro
+	d := distro.NewDistro()
+	distroLike := d.DistroLike // Es: "Debian", "Arch", "Fedora"
+
+	// Mappa di fallback basata sulla logica del sarto originale
+	fallbacks := map[string][]string{
+		"Ubuntu":   {"ubuntu.yaml", "debian.yaml", "devuan.yaml"},
+		"Debian":   {"debian.yaml", "devuan.yaml", "ubuntu.yaml"},
+		"Devuan":   {"devuan.yaml", "debian.yaml", "ubuntu.yaml"},
+		"Arch":     {"arch.yaml", "debian.yaml"},
+		"Fedora":   {"fedora.yaml", "debian.yaml"},
+		"Alpine":   {"alpine.yaml", "debian.yaml"},
+		"Opensuse": {"opensuse.yaml", "debian.yaml"},
+	}
+
+	filesToTry, exists := fallbacks[distroLike]
+	if !exists {
+		// Se la distro non è mappata, proviamo debian.yaml come fallback universale
+		filesToTry = []string{"debian.yaml"}
+	}
+
+	for _, file := range filesToTry {
+		fullPath := filepath.Join(costumePath, file)
+		if _, err := os.Stat(fullPath); err == nil {
+			// utils.LogCoala("Trovato cartamodello compatibile: %s", file)
+			return fullPath
+		}
+	}
+
+	return ""
+}
+
+// loadSuit trasforma il file YAML fisico nella struttura Suit
+func loadSuit(yamlFile string) (*Suit, error) {
+	if yamlFile == "" {
+		return nil, fmt.Errorf("nessun file di definizione costume trovato")
+	}
+
+	data, err := os.ReadFile(yamlFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var suit Suit
+	if err := yaml.Unmarshal(data, &suit); err != nil {
+		return nil, err
+	}
+
+	return &suit, nil
+}
+
+// getAvailablePackages interroga il sistema per sapere quali pacchetti esistono nei repo
+func getAvailablePackages() map[string]struct{} {
+	available := make(map[string]struct{})
+
+	// Usiamo il percorso assoluto e chiamiamo direttamente il binario
+	// evitando di passare per la shell (sh -c) di ExecCapture
+	cmd := exec.Command("/usr/bin/apt-cache", "pkgnames")
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		utils.LogError("Errore pipe apt-cache: %v", err)
+		return available
+	}
+
+	if err := cmd.Start(); err != nil {
+		utils.LogError("Errore avvio apt-cache: %v", err)
+		return available
+	}
+
+	// Scannerizziamo l'output riga per riga: efficiente e pulito
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line != "" {
+			available[line] = struct{}{}
+		}
+	}
+
+	if err := cmd.Wait(); err != nil {
+		utils.LogError("apt-cache ha riportato un errore: %v", err)
+	}
+
+	utils.LogCoala("Database pacchetti caricato: %d nomi trovati.", len(available))
+	return available
+}
+
+// installWithRetries gestisce l'installazione con i tentativi (retry)
+func installWithRetries(packages []string, retries int) {
+	if len(packages) == 0 {
+		return
+	}
+
+	pkgString := strings.Join(packages, " ")
+	// Usiamo DEBIAN_FRONTEND per evitare prompt interattivi
+	cmd := fmt.Sprintf("DEBIAN_FRONTEND=noninteractive apt-get install -yqq %s", pkgString)
+
+	for i := 1; i <= retries; i++ {
+		utils.LogCoala("Tentativo di installazione %d di %d...", i, retries)
+
+		err := utils.Exec(cmd)
+		if err == nil {
+			utils.LogCoala("✅ Installazione riuscita!")
+			break
+		}
+
+		if i < retries {
+			utils.LogCoala("⚠️ Tentativo fallito, attesa 3 secondi...")
+			time.Sleep(3 * time.Second)
+		} else {
+			utils.LogError("❌ Impossibile installare i pacchetti dopo %d tentativi.", retries)
+		}
+	}
+}
+```
+
