@@ -77,6 +77,11 @@ func deployDynamicConfigs() error {
 // findSquashfsPath cerca il filesystem compresso
 func findSquashfsPath() string {
 	possiblePaths := []string{
+		// Manjaro (miso) - Percorsi specifici
+		"/run/miso/bootmnt/manjaro/x86_64/livefs.sfs",  // Il nome che hai usato nel profilo
+		"/run/miso/bootmnt/manjaro/x86_64/rootfs.sfs",  // Standard Manjaro
+		
+		// Debian & Arch (percorsi esistenti)
 		"/run/live/medium/live/filesystem.squashfs",
 		"/lib/live/mount/medium/live/filesystem.squashfs",
 		"/run/archiso/bootmnt/arch/x86_64/airootfs.sfs",

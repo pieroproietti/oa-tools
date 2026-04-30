@@ -202,3 +202,23 @@ remaster:
     description: "Smontaggio e pulizia"
     command: "oa_umount"
     
+
+# ==============================================================================
+# 01. PROFILO DI INSTALLAZIONE PER ARCH LINUX - LOGICA EVOLUTION
+# ==============================================================================
+install:
+
+  # ---------------------------------------------------------
+  # 01. FINALIZZAZIONE SISTEMA
+  # ---------------------------------------------------------
+  - name: "finalize"
+    description: "Generazione initramfs e configurazione GRUB"
+    command: |
+      # Rigenera le immagini initramfs per tutti i kernel installati
+      mkinitcpio -P
+      
+      # Installa il bootloader (coa sostituirà /dev/sda con il disco reale)
+      grub-install --target=i386-pc --recheck /dev/sda
+      
+      # Genera il file di configurazione di GRUB
+      grub-mkconfig -o /boot/grub/grub.cfg
