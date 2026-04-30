@@ -5,7 +5,7 @@ distributions:
     file: "debian.yaml"
   
   - id: "arch"
-    like: ["endeavouros"]
+    like: ["endeavouros", "cachyos"]
     file: "arch.yaml"
 
   - id: "manjaro"

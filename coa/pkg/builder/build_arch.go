@@ -19,17 +19,17 @@ pkgdesc="oa-tools universal Linux remastering"
 arch=('x86_64')
 license=('GPL3')
 depends=(
-    'mkinitcpio-archiso'     # <--- FONDAMENTALE: risolve l'errore del filesystem non trovato
-    'libisoburn'             # Fornisce xorriso per creare l'immagine ISO
-    'squashfs-tools'         # Comprime il sistema (airootfs.sfs)
-    'mtools'                 # Necessario per la partizione di boot EFI
-    'dosfstools'             # Necessario per formattare la partizione EFI (vfat)
-    'arch-install-scripts'   # Fornisce arch-chroot e genfstab
-    'grub'                   # Il bootloader per la ISO
-    'rsync'                  # Per copiare i file del sistema con permessi corretti
-    'sudo'                   # Per gestire i permessi durante il build
-    'pv'                     # (Pipe Viewer): Serve come "tachimetro"
-    'git'                    # wardrobe
+    'mkinitcpio-archiso'     # FONDAMENTALE per il supporto live su base Arch
+    'libisoburn'             # xorriso
+    'squashfs-tools'         # mksquashfs
+    'mtools'                 # EFI
+    'dosfstools'             # vfat per EFI
+    'arch-install-scripts'   # arch-chroot
+    'grub'                   # bootloader
+    'rsync'                  # copia file
+    'sudo'                   # privilegi
+    'pv'                     # progress meter
+    'git'                    # gestione wardrobe
 )
 conflicts=('penguins-eggs')
 backup=('etc/oa-tools.d/oa-tools.yaml')
@@ -44,24 +44,26 @@ build() {
     # Compilazione della "mente" (Go)
     msg2 "Compilazione del motore Go (coa)..."
     cd "${startdir}/coa"
-    # Usiamo i flag per la versione passati dal builder
     go build -ldflags "-X 'coa/pkg/cmd.AppVersion=${pkgver}'" -o coa main.go
 }
 
 package() {
-    # 1. Installazione binari e creazione alias eggs
-    # Arch segue rigorosamente la gerarchia /usr/bin
+    # 1. Installazione binari e alias
     install -Dm755 "${startdir}/oa/oa" "${pkgdir}/usr/bin/oa"
     install -Dm755 "${startdir}/coa/coa" "${pkgdir}/usr/bin/coa"
     ln -s coa "${pkgdir}/usr/bin/eggs"
 
     # 2. Configurazione di sistema (/etc/oa-tools.d)
-    # Creiamo la struttura per la configurazione YAML e la brain.d per coa
+    # Creiamo le directory necessarie
     install -d "${pkgdir}/etc/oa-tools.d/brain.d"
-    cp -r "${startdir}/coa/brain.d/"* "${pkgdir}/etc/oa-tools.d/brain.d/"
+
+    # Copia della "mente" (index.yaml e altri file di logica)
+    if [ -d "${startdir}/coa/brain.d" ]; then
+        msg2 "Installazione logica agnostica (brain.d)..."
+        cp -r "${startdir}/coa/brain.d/"* "${pkgdir}/etc/oa-tools.d/brain.d/"
+    fi
 
     # Generazione del file di configurazione principale oa-tools.yaml
-    # Utilizziamo il dialetto "oa" [cite: 30-03-2026] e citiamo la filosofia [cite: 29-03-2026]
     cat <<EOF > "${pkgdir}/etc/oa-tools.d/oa-tools.yaml"
 ---
 # oa-tools configuration
@@ -80,15 +82,16 @@ remaster:
   work_dir: "/home/eggs"
 EOF
 
-    # Se esistono file di configurazione aggiuntivi nella cartella conf del progetto, li installiamo
+    # Installazione di eventuali file extra dalla cartella conf del progetto
     if [ -d "${startdir}/conf" ]; then
+        msg2 "Installazione file di configurazione addizionali..."
         cp -r "${startdir}/conf/"* "${pkgdir}/etc/oa-tools.d/"
     fi
 
     # 3. Documentazione (Man pages)
     install -Dm644 "${startdir}/coa/docs/man/"*.1 -t "${pkgdir}/usr/share/man/man1/"
 
-    # 4. Completamenti shell e relativi alias
+    # 4. Completamenti shell e alias
     install -Dm644 "${startdir}/coa/docs/completion/coa.bash" "${pkgdir}/usr/share/bash-completion/completions/coa"
     install -Dm644 "${startdir}/coa/docs/completion/coa.zsh" "${pkgdir}/usr/share/zsh/vendor-completions/_coa"
     install -Dm644 "${startdir}/coa/docs/completion/coa.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/coa.fish"
@@ -97,16 +100,16 @@ EOF
     ln -s _coa "${pkgdir}/usr/share/zsh/vendor-completions/_eggs"
     ln -s coa.fish "${pkgdir}/usr/share/fish/vendor_completions.d/eggs.fish"
 
-    # 5. Patch per l'autocompletamento Bash dell'alias eggs
+    # Patch autocompletamento Bash per alias eggs
     echo "complete -o default -F __start_coa eggs" >> "${pkgdir}/usr/share/bash-completion/completions/coa"
 }
 `, baseVer, relNum)
 
-	// Scrittura del file PKGBUILD nella root del progetto
+	// Scrittura del file PKGBUILD
 	err := os.WriteFile(filepath.Join(projRoot, "PKGBUILD"), []byte(pkgbuildContent), 0644)
 	if err != nil {
-		fmt.Printf("%s[ERROR]%s Failed to write PKGBUILD: %v\n", ColorRed, ColorReset, err)
+		fmt.Printf("[ERROR] Failed to write PKGBUILD: %v\n", err)
 		return
 	}
-	fmt.Printf("%s[SUCCESS]%s PKGBUILD generato correttamente per la versione %s-%s\n", ColorGreen, ColorReset, baseVer, relNum)
+	fmt.Printf("[SUCCESS] PKGBUILD (Arch) generato correttamente per la versione %s-%s\n", baseVer, relNum)
 }
