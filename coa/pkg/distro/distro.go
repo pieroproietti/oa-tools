@@ -13,27 +13,16 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"sigs.k8s.io/yaml"
 )
 
 // Distro rappresenta le informazioni dell'ambiente host "purificate"
 type Distro struct {
-	DistroID       string
-	CodenameID     string
-	ReleaseID      string
-	FamilyID       string
-	DistroLike     string
-	DistroUniqueID string
-	Arch           string
-}
-
-// DerivativeMapping mappa la struttura del file YAML
-type DerivativeMapping struct {
-	DistroLike   string   `json:"distroLike"`
-	CodenameLike string   `json:"codenameLike"`
-	Family       string   `json:"family"`
-	Derivatives  []string `json:"derivatives"`
+	DistroID   string
+	CodenameID string
+	ReleaseID  string
+	FamilyID   string
+	DistroLike string
+	Arch       string
 }
 
 // parseOsRelease legge /etc/os-release
@@ -58,123 +47,70 @@ func parseOsRelease() map[string]string {
 	return info
 }
 
-// resolveDerivative cerca l'identità originale nel file YAML
-func resolveDerivative(distroID string, codenameID string) (bool, *Distro) {
-	// Ordine di ricerca: Locale (sviluppo) -> Sistema (produzione)
-	paths := []string{
-		"brain.d/derivatives.yaml",
-		"/etc/oa-tools.d/brain.d/derivatives.yaml",
-	}
-
-	var yamlData []byte
-	var err error
-	for _, p := range paths {
-		yamlData, err = os.ReadFile(p)
-		if err == nil {
-			utils.LogCoala("derivatives.yaml non trovato")
-			break // Trovato!
-		}
-	}
-
-	if err != nil {
-		fmt.Println("\033[1;33m[coa]\033[0m Attenzione: file derivatives.yaml non trovato.")
-		return false, nil
-	}
-
-	var mappings []DerivativeMapping
-	if err := yaml.Unmarshal(yamlData, &mappings); err != nil {
-		utils.LogCoala("Errore nel parsing di derivatives.yaml")
-		return false, nil
-	}
-
-	for _, mapping := range mappings {
-		for _, deriv := range mapping.Derivatives {
-			if strings.EqualFold(deriv, distroID) || strings.EqualFold(deriv, codenameID) {
-				return true, &Distro{
-					DistroID:       distroID,
-					CodenameID:     codenameID,
-					FamilyID:       mapping.Family,
-					DistroLike:     mapping.DistroLike,
-					DistroUniqueID: mapping.CodenameLike,
-				}
-			}
-		}
-	}
-	return false, nil
-}
-
-// NewDistro inizializza e riconosce la Distro
+// NewDistro inizializza e riconosce la Distro in modo agnostico
 func NewDistro() *Distro {
 	osInfo := parseOsRelease()
 
-	rawID := osInfo["ID"]
-	rawCodename := osInfo["VERSION_CODENAME"]
-	rawRelease := osInfo["VERSION_ID"]
-
-	idLower := strings.ToLower(rawID)
+	rawID := strings.ToLower(osInfo["ID"])
+	rawLike := strings.ToLower(osInfo["ID_LIKE"])
+	likes := strings.Fields(rawLike)
 
 	d := &Distro{
-		DistroID:   rawID,
-		CodenameID: rawCodename,
-		ReleaseID:  rawRelease,
+		DistroID:   osInfo["ID"],
+		CodenameID: osInfo["VERSION_CODENAME"],
+		ReleaseID:  osInfo["VERSION_ID"],
 	}
 
-	switch idLower {
-	case "arch":
-		d.FamilyID = "archlinux"
-		d.DistroLike = "Arch"
-		d.DistroUniqueID = "rolling"
-		return d
+	// Candidati per il riconoscimento: prima l'ID specifico, poi i LIKE
+	candidates := append([]string{rawID}, likes...)
 
-	case "debian":
-		d.FamilyID = "debian"
-		d.DistroLike = "Debian"
-		d.DistroUniqueID = rawCodename
-		return d
+	for _, c := range candidates {
+		switch c {
+		case "debian", "ubuntu", "linuxmint", "kali", "pop":
+			d.FamilyID = "debian"
+			d.DistroLike = "Debian"
+			return d
 
-	case "fedora":
-		d.FamilyID = "fedora"
-		d.DistroLike = "Fedora"
-		d.DistroUniqueID = "rolling"
-		return d
+		case "arch", "endeavouros", "garuda":
+			d.FamilyID = "archlinux"
+			d.DistroLike = "Arch"
+			return d
 
-	case "manjaro":
-		d.FamilyID = "manjaro"
-		d.DistroLike = "Manjaro"
-		d.DistroUniqueID = "rolling"
-		return d
+		case "manjaro", "biglinux", "bigcommunity":
+			d.FamilyID = "manjaro"
+			d.DistroLike = "Manjaro"
+			return d
+
+		case "fedora", "nobara", "rhel", "centos":
+			d.FamilyID = "fedora"
+			d.DistroLike = "Fedora"
+			return d
+		}
 	}
 
-	found, derivativeDistro := resolveDerivative(rawID, rawCodename)
-	if found {
-		return derivativeDistro
-	}
-
-	utils.LogCoala("[coa] Distro sconosciuta (%s/%s). Aggiungila a /etc/os-tools.d/brain.d/derivatives.yaml!\n", rawID, rawCodename)
-	os.Exit(1)
-	return nil
+	// Fallback agnostico
+	utils.LogCoala("[coa] Distro non mappata specificamente (%s). Modalità Generica.", osInfo["ID"])
+	d.FamilyID = "generic"
+	d.DistroLike = osInfo["ID"]
+	return d
 }
 
 // GetISOName genera il nome completo: egg-of-<distro>-<host>-<arch>-<data>.iso
 func (d *Distro) GetISOName() string {
 	timestamp := time.Now().Format("2006-01-02_1504")
-	// Chiamiamo il metodo che genera il prefisso
 	prefix := d.GetISOPrefix()
 	return fmt.Sprintf("%s%s.iso", prefix, timestamp)
 }
 
 // GetISOPrefix genera la parte iniziale: egg-of-<distro>-<host>-<arch>-
 func (d *Distro) GetISOPrefix() string {
-	// Puliamo il nome della distro
 	distroName := strings.ToLower(strings.ReplaceAll(d.DistroID, " ", "-"))
 
-	// CodeName
 	codeName := strings.ToLower(strings.ReplaceAll(d.CodenameID, " ", "-"))
 	if codeName == "" {
 		codeName = strings.ToLower(strings.ReplaceAll(d.ReleaseID, " ", "-"))
 	}
 
-	// hostNale
 	hostName, err := os.Hostname()
 	if err != nil {
 		hostName = "unknown"

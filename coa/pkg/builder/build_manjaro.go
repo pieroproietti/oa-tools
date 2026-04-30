@@ -12,7 +12,7 @@ func buildManjaroPackage(projRoot, baseVer, relNum string) {
 	// Definiamo il contenuto del PKGBUILD per Manjaro
 	pkgbuildContent := fmt.Sprintf(`# Maintainer: Piero Proietti <piero.proietti@gmail.com>
 # coa is the mind and oa the arm
-pkgname=oa-tools
+pkgname=oa-tools-manjaro
 pkgver=%s
 pkgrel=%s
 pkgdesc="oa-tools universal Linux remastering (Manjaro edition)"

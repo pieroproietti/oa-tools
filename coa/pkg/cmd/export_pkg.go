@@ -26,6 +26,7 @@ func init() {
 
 func handleExportPkg(clean bool) {
 	myDistro := distro.NewDistro()
+	distro:= myDistro.DistroID
 	family := myDistro.FamilyID
 
 	LogCoala("Famiglia rilevata: %s. Ricerca pacchetti pertinenti...", family)
@@ -35,17 +36,20 @@ func handleExportPkg(clean bool) {
 
 	// Filtriamo per estensione in base alla famiglia
 	switch family {
-	case "debian", "ubuntu", "devuan":
+	case "debian":
 		pattern = "oa-tools*.deb"
 		extension = ".deb"
 	case "archlinux":
 		pattern = "oa-tools*.pkg.tar.zst"
 		extension = ".pkg.tar.zst"
-	case "fedora", "redhat", "suse":
+	case "fedora":
 		pattern = "oa-tools*.rpm"
 		extension = ".rpm"
+	case "manjaro":
+		pattern = "oa-tools-manjaro-*.pkg.tar.zst"
+		extension = ".pkg.tar.zst"
 	default:
-		LogCoala("Nessuna regola di esportazione specifica per la famiglia: %s", family)
+		LogCoala("Nessuna regola di esportazione specifica per la distro %s della famiglia: %s", distro,family)
 		return
 	}
 

@@ -32,7 +32,6 @@ It does not save this state or alter any configuration; it simply provides a cle
 		fmt.Printf("DistroLike:      %s\n", myDistro.DistroLike)
 		fmt.Printf("Codename:        %s\n", myDistro.CodenameID)
 		fmt.Printf("Release:         %s\n", myDistro.ReleaseID)
-		fmt.Printf("DistroUniqueID:  %s\n\n", myDistro.DistroUniqueID)
 	},
 }
 

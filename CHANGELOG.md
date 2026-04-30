@@ -3,6 +3,32 @@
 # Changelog - oa-tools
 
 # Changelog - oa (Artisan's Dialect of Eggs)
+## [0.7.1] - 2026-04-30
+### "The Streamlined Artisan" Update
+
+This minor release focuses on code purification and structural robustness, following our core "Eggs & Bananas" philosophy. We've removed redundant configuration files and refined the distro-agnostic engine for better performance and reliability.
+
+### Added
+- **Smart Directory Management**: The Arch Linux and Manjaro builders now correctly install the `brain.d` logic directory into `/etc/oa-tools.d/`, ensuring agnostic mapping is available immediately after installation.
+- **Enhanced Distro Detection**: Integration with system `ID_LIKE` metadata allows for seamless recognition of derivative distributions without external mapping files.
+
+### Changed
+- **Code Purification**: Removed the `DistroUniqueID` field and the `derivatives.yaml` dependency. The system now relies on pure `/etc/os-release` data, making the codebase leaner and easier to maintain.
+- **Refactored NewDistro**: Optimized the recognition logic to prioritize system-provided identity over manual overrides.
+
+### Fixed
+- Fixed a missing directory copy in the Arch Linux `PKGBUILD` that prevented `coa` from finding its core logic.
+- Improved error handling in the `distro` package: the system now enters a "Generic" mode instead of exiting when encountering an unmapped distribution.
+
+---
+
+## Release Note: oa 0.7.1 - Simplicity is the Ultimate Sophistication
+
+With **oa 0.7.1**, we continue to strip away the unnecessary. By moving the distribution mapping directly into the core logic and leveraging system metadata, we've eliminated the need for external configuration files. 
+
+This release ensures that your "Artisan" environment on Arch Linux is configured perfectly from the first `makepkg`. It’s faster, cleaner, and more robust.
+
+**The artisan's tool just got sharper.**
 
 ## [0.7.0] - 2026-04-29
 ### "The Agnostic Artisan" Release
