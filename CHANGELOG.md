@@ -2,7 +2,19 @@
 
 # Changelog - oa-tools
 
-# Changelog - oa (Artisan's Dialect of Eggs)
+## [0.7.2] - 2026-05-01
+
+### **Core Improvements & Fixes**
+*   **Standardized Sudo Privileges**: Implemented a unified "Arch-style" sudo configuration for the live user, ensuring seamless operation of **oa** tools across Arch, Debian, and Manjaro bases.
+*   **Enhanced Build Cleanup**: Integrated a "tabula rasa" policy during the remastering process to automatically remove legacy or malformed configuration files (e.g., `00_artisan`) that previously caused syntax errors in the sudoers directory.
+*   **Post-Installation Optimization**: Added an automated cleanup routine to the **FINALIZE** stage. This ensures that the installed system is stripped of live-environment "ghost" files, leaving only the necessary installer-generated permissions.
+*   **Permission Hardening**: Enforced strict `0440` permissions for generated sudoers files to comply with security standards and prevent them from being ignored by the system.
+
+---
+
+This release marks a significant step in the **eggs-bananas** philosophy, delivering a cleaner, more professional transition from the live environment to the final installation.
+
+
 ## [0.7.1] - 2026-04-30
 ### "The Streamlined Artisan" Update
 

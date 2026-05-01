@@ -52,6 +52,10 @@ func RunCalamaresInstaller() {
 		utils.LogError("Errore configurazione utenti: %v", err)
 		// Non blocchiamo tutto, proviamo a procedere comunque
 	}
+	if err := calamares.PrepareRemoveuserConf(); err != nil {
+		utils.LogError("Errore creazione removeuser.conf: %v", err)
+		// Non blocchiamo tutto, proviamo a procedere comunque
+	}
 
 	// 5. LAUNCH: Calamares parte e trova la pappa pronta
 	if err := calamares.Launch(); err != nil {

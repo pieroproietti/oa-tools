@@ -66,16 +66,24 @@ int oa_users(OA_Context *ctx) {
             LOG_INFO("Creazione identità nativa: user='%s' home='%s' password:'%s'", login, home, pass);
 
             // --- GESTIONE PASSWORD (Hashing) ---
-            // Se la password non è già un hash (inizia con $), la criptiamo in SHA-512
             char *final_pass = (char *)pass;
             if (pass && pass[0] != '$') {
-                // $6$ indica SHA-512, "oa" è il salt.
                 final_pass = crypt(pass, "$6$oa$");
             }
 
             // Scrittura nei database di sistema nativi
             yocto_write_passwd(fp, login, OE_UID_HUMAN_MIN, OE_UID_HUMAN_MIN, "live,,,", home, "/bin/bash");
             yocto_write_shadow(fs, login, final_pass);
+
+            // --- CREAZIONE GRUPPO PRIMARIO (Fix per Debian ID 1000) ---
+            FILE *fg = fopen(g_path, "a");
+            if (fg) {
+                fprintf(fg, "%s:x:%d:\n", login, OE_UID_HUMAN_MIN);
+                fclose(fg);
+                LOG_INFO("Gruppo primario '%s' (GID %d) creato con successo.", login, OE_UID_HUMAN_MIN);
+            } else {
+                LOG_ERR("Errore: impossibile aprire %s per creare il gruppo primario.", g_path);
+            }
 
             // Aggiunta ai gruppi secondari (sudo, audio, video, ecc.)
             cJSON *groups_obj = cJSON_GetObjectItemCaseSensitive(u, "groups");
@@ -93,7 +101,6 @@ int oa_users(OA_Context *ctx) {
                 LOG_WARN("Attenzione: mkdir fallita per %s (errno: %d)", full_home, errno);
             }
 
-            // Esecuzione skel + chroot tramite comando shell (atomico)
             char home_cmd[CMD_MAX];
             snprintf(home_cmd, sizeof(home_cmd), 
                      "cp -a %s/etc/skel/. %s/ 2>/dev/null || true && chown -R %d:%d %s", 

@@ -49,12 +49,16 @@ remaster:
     command: "oa_users"
 
   # ---------------------------------------------------------
-  # 04. PRIVILEGI SUDO
+  # 04. ENABLE SUDO USER LIVE
   # ---------------------------------------------------------
-  - name: "coa-privileges"
-    description: "Abilitazione poteri sudo per il gruppo live"
+  - name: "coa-enable-live"
+    description: "Abilitazione poteri sudo per user live"
     command: "oa_shell"
-    run_command: "sh -c \"echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-group && chmod 440 /etc/sudoers.d/10-live-group\""
+    run_command: |
+      mkdir -p /etc/sudoers.d
+      rm -f /etc/sudoers.d/00*
+      echo "live ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/00-live
+      chmod 0440 /etc/sudoers.d/00-live
     chroot: true
 
   # ---------------------------------------------------------
@@ -173,7 +177,7 @@ remaster:
   - name: "coa-xorriso"
     description: "Masterizzazione ISO finale"
     command: "oa_shell"
-    run_command: "xorriso -as mkisofs -R -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o ${ISO_OUTPUT} /home/eggs/isodir"
+    run_command: "xorriso -as mkisofs -iso-level 3 -R -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o ${ISO_OUTPUT} /home/eggs/isodir"
 
   # ---------------------------------------------------------
   # 11. PULIZIA FINALE
@@ -193,6 +197,9 @@ install:
   - name: "finalize"
     description: "Generazione initramfs e configurazione GRUB"
     command: |
+      # rimuove user live
+      rm -f /etc/sudoers.d/00-live
+
       # Rigenera le immagini initramfs per tutti i kernel installati
       mkinitcpio -P
       

@@ -50,13 +50,18 @@ remaster:
     # Nota: Go inietterà automaticamente l'oggetto "users" qui
 
   # ---------------------------------------------------------
-  # 04. CONFIGURAZIONE PRIVILEGI SUDO
+  # 04. ENABLE SUDO USER LIVE
   # ---------------------------------------------------------
-  - name: "coa-privileges"
-    description: "Abilitazione poteri sudo per il gruppo live"
+  - name: "coa-enable-live"
+    description: "Abilitazione poteri sudo per user live"
     command: "oa_shell"
-    run_command: "sh -c \"echo '%sudo ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-group && chmod 440 /etc/sudoers.d/10-live-group\""
+    run_command: |
+      mkdir -p /etc/sudoers.d
+      rm -f /etc/sudoers.d/00*
+      echo "live ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/00-live
+      chmod 0440 /etc/sudoers.d/00-live
     chroot: true
+
 
   # ---------------------------------------------------------
   # 05. GENERAZIONE INITRAMFS (DEBIAN STYLE)
@@ -158,7 +163,7 @@ remaster:
   - name: "coa-xorriso"
     description: "Creazione della ISO finale con xorriso"
     command: "oa_shell"
-    run_command: "xorriso -as mkisofs -J -joliet-long -r -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o ${ISO_OUTPUT} /home/eggs/isodir"
+    run_command: "xorriso -as mkisofs -iso-level 3 -R -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o ${ISO_OUTPUT} /home/eggs/isodir"
 
   # ---------------------------------------------------------
   # 10. PULIZIA FINALE E UMOUNT
@@ -176,8 +181,10 @@ install:
   # 01. FINALIZZAZIONE SISTEMA
   # ---------------------------------------------------------
   - name: "finalize"
-    description: "Configurazione bootloader e initramfs"
+    description: "Generazione initramfs e configurazione GRUB"
     command: |
+      # rimuove user live
+      rm -f /etc/sudoers.d/00-live
       update-initramfs -u
       grub-install --recheck /dev/sda
       update-grub

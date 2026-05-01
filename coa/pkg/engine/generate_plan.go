@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"coa/pkg/pilot"
+	"coa/pkg/utils"
 )
 
 // GeneratePlan converte lo YAML in JSON. Ora accetta anche stopAfter!
@@ -55,6 +56,13 @@ func GeneratePlan(yamlSteps []pilot.YamlStep, familyID string, isRemaster bool, 
 				Info:       "Creazione home directory da /etc/skel",
 				RunCommand: "mkdir -p " + workPath + "/liveroot/home/live && cp -a " + workPath + "/liveroot/etc/skel/. " + workPath + "/liveroot/home/live/",
 			})
+
+			// Recuperiamo i gruppi "specchiati" dall'host (es. audio, video, docker, wheel)
+			mirroredGroups := utils.GetUserGroups()
+
+			// Iniettiamo i gruppi nell'utente di default prima di passarlo al piano
+			// In questo modo oa_users riceverà l'array JSON corretto
+			defaultUser.Groups = mirroredGroups
 
 			plan.Plan = append(plan.Plan, OATask{
 				Command:    "oa_users",
