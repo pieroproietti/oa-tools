@@ -1,12 +1,53 @@
-# Profilo di Rimasterizzazione per Fedora (OA) - Evolution Edition
+# ==============================================================================
+# 00. PROFILO DI RIMASTERIZZAZIONE PER FEDORA (OA) - EVOLUTION EDITION
+# ==============================================================================
+
 remaster:
+
+  # ---------------------------------------------------------
+  # 01. SETUP FILESYSTEM E MOUNT
+  # ---------------------------------------------------------
   - name: "coa-fs-setup"
     description: "Preparazione filesystem e mount (proiezione host)"
-    command: "oa_mount_logic"
+    command: "oa_mount_logic" # Go espanderà questo in oa_mkdir, oa_cp e oa_bind
 
+  # ---------------------------------------------------------
+  # 02. PREPARAZIONE BOOTLOADERS E UEFI
+  # ---------------------------------------------------------
+  - name: "coa-bootloaders"
+    description: "Copia dei bootloader e creazione immagine FAT per UEFI"
+    command: "oa_shell"
+    run_command: |
+      set -e
+      mkdir -p /home/eggs/isodir/live
+      mkdir -p /home/eggs/isodir/isolinux
+      mkdir -p /home/eggs/isodir/boot/grub
+      mkdir -p /home/eggs/isodir/EFI/BOOT
+      
+      # ISOLINUX
+      cp /tmp/coa/bootloaders/ISOLINUX/isolinux.bin /home/eggs/isodir/isolinux/
+      cp /tmp/coa/bootloaders/syslinux/modules/bios/*.c32 /home/eggs/isodir/isolinux/
+      cp /tmp/coa/bootloaders/ISOLINUX/isolinux.cfg /home/eggs/isodir/isolinux/ 2>/dev/null || touch /home/eggs/isodir/isolinux/isolinux.cfg
+      
+      # GRUB & UEFI
+      cp /tmp/coa/bootloaders/grub/grub.cfg /home/eggs/isodir/boot/grub/ 2>/dev/null || touch /home/eggs/isodir/boot/grub/grub.cfg
+      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI
+      
+      # Creazione FAT EFI IMG
+      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192
+      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI
+      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
+      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/boot/grub/grub.cfg ::/EFI/BOOT/grub.cfg
+
+  # ---------------------------------------------------------
+  # 03. GESTIONE IDENTITÀ UTENTE
+  # ---------------------------------------------------------
   - name: "coa-identity"
     description: "Gestione nativa identità (Purge & Inject stile Yocto)"
     command: "oa_users"
+    # Nota: Go inietterà automaticamente l'oggetto "users" qui
 
   # ---------------------------------------------------------
   # 04. ENABLE SUDO USER LIVE
@@ -21,49 +62,33 @@ remaster:
       chmod 0440 /etc/sudoers.d/00-live
     chroot: true
 
+  # ---------------------------------------------------------
+  # 05. GENERAZIONE INITRAMFS (FEDORA STYLE)
+  # ---------------------------------------------------------
   - name: "coa-initrd"
     description: "Generazione Initramfs tramite dracut (Fedora)"
     command: "oa_shell"
-    # dracut -f rigenera l'initramfs per il kernel corrente
     run_command: "dracut -f --no-hostonly /boot/initramfs-fedora.img"
     chroot: true
 
-  - name: "coa-live-struct"
-    description: "Creazione della struttura isodir per il boot"
-    command: "oa_mkdir"
-    path: "/home/eggs/isodir/live"
-
-  - name: "coa-kernel-copy"
-    description: "Copia del Kernel e Initrd (standardizzati per la ISO)"
-    command: "oa_shell"
-    # Fedora usa versioni specifiche nel nome file, qui usiamo un glob o il nome generato sopra
-    run_command: "cp /home/eggs/liveroot/boot/vmlinuz-* /home/eggs/isodir/live/vmlinuz && cp /home/eggs/liveroot/boot/initramfs-fedora.img /home/eggs/isodir/live/initrd.img"
-
-  - name: "coa-bootloaders"
-    description: "Copia dei bootloader e creazione immagine FAT per UEFI"
+  # ---------------------------------------------------------
+  # 06. COPIA KERNEL E INITRD (STANDARDIZZAZIONE ISO)
+  # ---------------------------------------------------------
+  - name: "coa-copy-kernel"
+    description: "Copia del Kernel e Initrd per la ISO"
     command: "oa_shell"
     run_command: |
-      set -e
-      mkdir -p /home/eggs/isodir/isolinux
-      mkdir -p /home/eggs/isodir/boot/grub
-      mkdir -p /home/eggs/isodir/EFI/BOOT
-      
-      # ISOLINUX
-      cp /tmp/coa/bootloaders/ISOLINUX/isolinux.bin /home/eggs/isodir/isolinux/
-      cp /tmp/coa/bootloaders/syslinux/modules/bios/*.c32 /home/eggs/isodir/isolinux/
-      
-      # GRUB & UEFI
-      cp /tmp/coa/bootloaders/grub/x86_64-efi/monolithic/grubx64.efi /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI
-      
-      # Creazione FAT EFI IMG
-      dd if=/dev/zero of=/home/eggs/isodir/EFI/BOOT/efi.img bs=1k count=8192
-      mkfs.vfat /home/eggs/isodir/EFI/BOOT/efi.img
-      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI
-      mmd -i /home/eggs/isodir/EFI/BOOT/efi.img ::/EFI/BOOT
-      mcopy -i /home/eggs/isodir/EFI/BOOT/efi.img /home/eggs/isodir/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
+      # Trova l'ultimo kernel evitando versioni rescue
+      VMLINUZ=$(ls -v /home/eggs/liveroot/boot/vmlinuz-* | grep -v "rescue" | tail -n 1)
+      cp "$VMLINUZ" /home/eggs/isodir/live/vmlinuz
+      cp /home/eggs/liveroot/boot/initramfs-fedora.img /home/eggs/isodir/live/initrd.img
+    chroot: false
 
+  # ---------------------------------------------------------
+  # 07. GENERAZIONE MENU DI BOOT (FEDORA STYLE)
+  # ---------------------------------------------------------
   - name: "coa-live-menus"
-    description: "Generazione configurazioni di boot (Fedora style)"
+    description: "Generazione configurazioni di boot (GRUB, Isolinux, EFI)"
     command: "oa_shell"
     chroot: false
     run_command: |
@@ -104,23 +129,50 @@ remaster:
       configfile \$prefix/grub.cfg
       EOF
 
+  # ---------------------------------------------------------
+  # 08. COMPRESSIONE SQUASHFS
+  # ---------------------------------------------------------
   - name: "coa-squashfs"
-    description: "Compressione del sistema (ZSTD)"
+    description: "Compressione del sistema (SquashFS zstd)"
     command: "oa_shell"
-    run_command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -noappend -ef /tmp/coa/excludes.list"
+    run_command: "mksquashfs /home/eggs/liveroot /home/eggs/isodir/live/filesystem.squashfs -comp zstd -Xcompression-level 3 -b 1M -processors 4 -noappend -wildcards -ef /tmp/coa/excludes.list"
 
+  # ---------------------------------------------------------
+  # 09. CREAZIONE ISO FINALE (XORRISO)
+  # ---------------------------------------------------------
   - name: "coa-xorriso"
     description: "Creazione della ISO finale con xorriso"
     command: "oa_shell"
     run_command: "xorriso -as mkisofs -r -J -joliet-long -l -cache-inodes -V 'OA_LIVE' -isohybrid-mbr /tmp/coa/bootloaders/ISOLINUX/isohdpfx.bin -partition_offset 16 -A 'OA_LIVE' -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -eltorito-alt-boot -e EFI/BOOT/efi.img -no-emul-boot -isohybrid-gpt-basdat -o /home/eggs/egg-of_final.iso /home/eggs/isodir"
 
+  # ---------------------------------------------------------
+  # 10. SMONTAGGIO E PULIZIA FINALE
+  # ---------------------------------------------------------
   - name: "coa-cleanup"
     description: "Smontaggio e pulizia"
     command: "oa_umount"
 
+# ==============================================================================
+# 01. PROFILO DI INSTALLAZIONE - LOGICA POST-COPY (FEDORA)
+# ==============================================================================
 install:
-  - name: "coa-initrd-target"
-    description: "Rigenerazione dracut sul sistema installato"
-    command: "oa_shell"
-    run_command: "dracut -f"
-    chroot: true
+
+  # ---------------------------------------------------------
+  # 01. FINALIZZAZIONE SISTEMA (FEDORA STYLE)
+  # ---------------------------------------------------------
+  - name: "finalize"
+    description: "Generazione initramfs e configurazione GRUB"
+    command: |
+      # Rimuove user live
+      rm -f /etc/sudoers.d/00-live
+      
+      # Rigenera Initramfs per l'hardware specifico dell'utente
+      dracut -f --kver $(uname -r)
+      
+      # Configurazione GRUB nativa Fedora
+      if [ -d /sys/firmware/efi ]; then
+          grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+      else
+          grub2-mkconfig -o /boot/grub2/grub.cfg
+      fi
+      

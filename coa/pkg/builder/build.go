@@ -29,14 +29,15 @@ func HandleBuild(d *distro.Distro, version string) {
 	baseVer, relNum := parseGitVersion(version)
 	projRoot, oaDir, coaDir := getProjectPaths()
 
-	// Header pulito con costanti
+	// Header pulito
 	fmt.Printf("%s====================================================%s\n", ColorCyan, ColorReset)
-	fmt.Printf("%s       COA BUILDER - Native Package Generation      %s\n", ColorCyan, ColorReset)
+	fmt.Printf("%s         COA BUILDER - Native Package Generation      %s\n", ColorCyan, ColorReset)
 	fmt.Printf("%s====================================================%s\n", ColorCyan, ColorReset)
 
 	LogBuild("Building version: %s", AppVersion)
 
-	// 1. Compilazione motore C
+	// 1. Compilazione motore C (Il Braccio)
+	LogBuild("Compiling Engine (oa)...") // Aggiunto log esplicito
 	makeCmd := exec.Command("make", "-C", oaDir, fmt.Sprintf("VERSION=%s", AppVersion), "clean", "all")
 	makeCmd.Stdout, makeCmd.Stderr = os.Stdout, os.Stderr
 	if err := makeCmd.Run(); err != nil {
@@ -44,10 +45,13 @@ func HandleBuild(d *distro.Distro, version string) {
 		return
 	}
 
-	// 2. Compilazione orchestratore Go
-	// FIX: Sostituito "./pkg" con "main.go" per allinearlo al nuovo Makefile
+	// 2. Compilazione orchestratore Go (La Mente)
+	LogBuild("Compiling Orchestrator (coa)...") // Aggiunto log esplicito
 	ldflags := fmt.Sprintf("-X 'coa/pkg/cmd.AppVersion=%s'", AppVersion)
-	goCmd := exec.Command("go", "build", "-ldflags", ldflags, "-o", "coa", "main.go")
+
+	// Puntiamo al binario finale in modo assoluto per sicurezza
+	outputPath := filepath.Join(coaDir, "coa")
+	goCmd := exec.Command("go", "build", "-ldflags", ldflags, "-o", outputPath, "main.go")
 	goCmd.Dir = coaDir
 	goCmd.Stdout, goCmd.Stderr = os.Stdout, os.Stderr
 	if err := goCmd.Run(); err != nil {
@@ -62,15 +66,19 @@ func HandleBuild(d *distro.Distro, version string) {
 		return
 	}
 
-	// 4. Routing verso i file specifici
+	// 4. Routing verso i file specifici con DEBUG
+	LogBuild("Detected Distro Family: %s%s%s", ColorYellow, d.FamilyID, ColorReset)
+
 	switch d.FamilyID {
 	case "archlinux":
 		buildArchPackage(projRoot, baseVer, relNum)
 	case "manjaro":
 		buildManjaroPackage(projRoot, baseVer, relNum)
 	case "fedora", "rhel", "centos", "rocky", "almalinux":
+		// Questo ora DEVE attivarsi se d.FamilyID è fedora
 		buildFedoraPackage(projRoot, oaDir, coaDir, baseVer, relNum)
 	default:
+		LogBuild("Falling back to Debian/Generic packaging...")
 		pkgVersion := fmt.Sprintf("%s-%s", baseVer, relNum)
 		buildDebianPackage(projRoot, oaDir, coaDir, pkgVersion)
 	}
