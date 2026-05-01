@@ -1,6 +1,10 @@
 # Changelog - oa-tools
 
 # Changelog - oa-tools
+## [0.7.3] - 2026-05-01
+
+### **Core Improvements & Fixes**
+Full compatibility achieved with Linux Mint, the Ubuntu family, and its derivatives.
 
 ## [0.7.2] - 2026-05-01
 
