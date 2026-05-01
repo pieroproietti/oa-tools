@@ -50,6 +50,19 @@ remaster:
     # Nota: Go inietterà automaticamente l'oggetto "users" qui
 
   # ---------------------------------------------------------
+  # 04. ENABLE SUDO USER LIVE
+  # ---------------------------------------------------------
+  - name: "coa-enable-live"
+    description: "Abilitazione poteri sudo per user live"
+    command: "oa_shell"
+    run_command: |
+      mkdir -p /etc/sudoers.d
+      rm -f /etc/sudoers.d/00*
+      echo "live ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/00-live
+      chmod 0440 /etc/sudoers.d/00-live
+    chroot: true
+
+  # ---------------------------------------------------------
   # 05. GENERAZIONE INITRAMFS (MANJARO/MISO STYLE)
   # ---------------------------------------------------------
   - name: "coa-initrd"
@@ -205,6 +218,9 @@ install:
   - name: "finalize"
     description: "Generazione initramfs e configurazione GRUB"
     command: |
+      # rimuove user live
+      rm -f /etc/sudoers.d/00-live
+
       # Rigenera le immagini initramfs per tutti i kernel installati
       mkinitcpio -P
       

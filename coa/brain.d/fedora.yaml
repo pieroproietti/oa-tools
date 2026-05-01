@@ -8,10 +8,17 @@ remaster:
     description: "Gestione nativa identità (Purge & Inject stile Yocto)"
     command: "oa_users"
 
-  - name: "coa-privileges"
-    description: "Abilitazione poteri sudo per il gruppo wheel (Fedora standard)"
+  # ---------------------------------------------------------
+  # 04. ENABLE SUDO USER LIVE
+  # ---------------------------------------------------------
+  - name: "coa-enable-live"
+    description: "Abilitazione poteri sudo per user live"
     command: "oa_shell"
-    run_command: "sh -c \"echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/10-live-group && chmod 440 /etc/sudoers.d/10-live-group\""
+    run_command: |
+      mkdir -p /etc/sudoers.d
+      rm -f /etc/sudoers.d/00*
+      echo "live ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/00-live
+      chmod 0440 /etc/sudoers.d/00-live
     chroot: true
 
   - name: "coa-initrd"
