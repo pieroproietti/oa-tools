@@ -94,7 +94,7 @@ remaster:
     run_command: |
       set -e
       VOL_ID="OA_LIVE"
-      BOOT_PARAMS="root=live:LABEL=${VOL_ID} rd.live.image quiet splash"
+      BOOT_PARAMS="root=live:LABEL=${VOL_ID} rd.live.image enforcing=0 quiet splash"
       WORK_DIR="/home/eggs/isodir"
 
       # 1. GRUB.cfg
