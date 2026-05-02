@@ -107,27 +107,37 @@ remaster:
     chroot: false
 
   # ---------------------------------------------------------
-  # 07. GENERAZIONE MENU DI BOOT
+  # 07. GENERAZIONE MENU DI BOOT (GRUB/ISOLINUX/EFI)
   # ---------------------------------------------------------
   - name: "coa-live-menus"
-    description: "Generazione configurazioni di boot (GRUB, Isolinux, EFI)"
+    description: "Generazione configurazioni di boot con branding e splash"
     action: "oa_shell"
     chroot: false
     run_command: |
       set -e
-      # Definiamo le variabili per comodità
+      # 1. Variabili di ambiente e branding
       VOL_ID="OA_LIVE"
       BOOT_PARAMS="archisobasedir=arch archisolabel=${VOL_ID} cow_spacesize=2G quiet splash"
       WORK_DIR="/home/eggs/isodir"
+      # Recuperiamo il nome reale della distro
       PRETTY=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2 || echo "OA Live")
-      cp /usr/share/grub/unicode.pf2 /home/eggs/isodir/boot/grub/font.pf2
 
-      # Creazione directory
+      # 2. Creazione Directory
       mkdir -p ${WORK_DIR}/boot/grub
       mkdir -p ${WORK_DIR}/isolinux
       mkdir -p ${WORK_DIR}/EFI/BOOT
 
-      # 1. Generazione GRUB.cfg (Versione Leggibile)
+      # 3. Copia Assets (Font e Splash)
+      # Copia del font Unicode per evitare i quadratini
+      cp /usr/share/grub/unicode.pf2 ${WORK_DIR}/boot/grub/font.pf2 || echo "Font non trovato, ignoro."
+      
+      # Copia dello splash screen dagli asset locali
+      if [ -f "/etc/oa-tools.d/brain.d/assets/splash.png" ]; then
+          cp /etc/oa-tools.d/brain.d/assets/splash.png ${WORK_DIR}/boot/grub/splash.png
+          cp /etc/oa-tools.d/brain.d/assets/splash.png ${WORK_DIR}/isolinux/splash.png
+      fi
+
+      # 4. Generazione GRUB.cfg (Main)
       cat <<EOF > ${WORK_DIR}/boot/grub/grub.cfg
       set timeout=5
       set default=0
@@ -135,52 +145,63 @@ remaster:
       insmod all_video
       insmod gfxterm
       insmod png
+      insmod part_gpt
+      insmod part_msdos
+      insmod fat
+      insmod iso9660
 
-      # Carichiamo il font (se lo hai messo negli asset o trovato nel sistema)
+      # Caricamento Font e Terminale Grafico
       if loadfont /boot/grub/font.pf2; then
           set gfxmode=auto
           terminal_output gfxterm
       fi
 
+      # Immagine di sfondo e colori (nero su trasparente per contrasto)
       background_image /boot/grub/splash.png
       set menu_color_normal=black/black
       set menu_color_highlight=white/black
       
-      # Opzionale: un bordo per il menu se vuoi esagerare
-      set color_normal=light-gray/black
-      set color_highlight=white/dark-gray
+      search --no-floppy --set=root --label ${VOL_ID}
 
       menuentry "Start $PRETTY" {
           linux /live/vmlinuz ${BOOT_PARAMS}
           initrd /live/initrd.img
       }
+
+      menuentry "Start $PRETTY - RAM mode" {
+          linux /live/vmlinuz ${BOOT_PARAMS} toram
+          initrd /live/initrd.img
+      }
       EOF
 
-      # 2. Generazione ISOLINUX.cfg (BIOS)
+      # 5. Generazione ISOLINUX.cfg (BIOS)
       cat <<EOF > ${WORK_DIR}/isolinux/isolinux.cfg
       UI vesamenu.c32
       TIMEOUT 50
       DEFAULT live
 
-      # Definizione dello splash screen
       MENU BACKGROUND splash.png
-      MENU TITLE Penguins-eggs (Coa/Oa edition)
+      MENU TITLE $PRETTY
 
       LABEL live
           MENU LABEL Start $PRETTY
           LINUX /live/vmlinuz
-          INITRD /live/initrd.img ${BOOT_PARAMS}
+          APPEND ${BOOT_PARAMS}
+          INITRD /live/initrd.img
+
+      LABEL ram
+          MENU LABEL Start $PRETTY - RAM mode
+          LINUX /live/vmlinuz
+          APPEND ${BOOT_PARAMS} toram
+          INITRD /live/initrd.img
       EOF
 
-      # 3. Generazione Trampolino EFI (EFI/BOOT/grub.cfg)
+      # 6. Generazione Trampolino EFI
       cat <<EOF > ${WORK_DIR}/EFI/BOOT/grub.cfg
       search --set=root --file /live/filesystem.squashfs
       set prefix=(\$root)/boot/grub
       configfile \$prefix/grub.cfg
       EOF
-
-      cp /etc/oa-tools.d/brain.d/assets/splash.png /home/eggs/isodir/boot/grub/splash.png
-      cp /etc/oa-tools.d/brain.d/assets/splash.png /home/eggs/isodir/isolinux/splash.png
 
   # ---------------------------------------------------------
   # 08. COMPRESSIONE SQUASHFS
