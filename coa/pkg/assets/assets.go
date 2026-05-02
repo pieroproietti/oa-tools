@@ -26,26 +26,6 @@ var internalConfigs embed.FS
 //go:embed calamares_base/*
 var calamaresFiles embed.FS
 
-// ExtractConfigs estrae le configurazioni incorporate nel binario verso una directory temporanea
-func ExtractConfigs(destRoot string) error {
-	logAssets("Estrazione configurazioni base in: %s", destRoot)
-
-	// Creiamo la radice
-	if err := os.MkdirAll(destRoot, 0755); err != nil {
-		return fmt.Errorf("impossibile creare la directory %s: %v", destRoot, err)
-	}
-
-	// Verifica integrità dell'embed
-	entries, err := internalConfigs.ReadDir("configs")
-	if err != nil {
-		return fmt.Errorf("l'embed 'configs' è vuoto o errato: %w", err)
-	}
-
-	logAssets("Trovati %d elementi nella cartella embed 'configs'", len(entries))
-
-	return fsCopy(internalConfigs, "configs", destRoot)
-}
-
 // ExtractCalamares estrae i file universali di Calamares usando fsCopy
 func ExtractCalamares(destRoot string) error {
 	logAssets("Estrazione asset Calamares in: %s", destRoot)
