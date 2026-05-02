@@ -174,7 +174,7 @@ install:
   # 01. coa-fedora-finalize
   # ---------------------------------------------------------
   - name: "finalize"
-    description: "Generazione initramfs e configurazione GRUB definitiva"
+    description: "Generazione initramfs e configurazione GRUB"
     action: "shell"        # Azione diretta senza wrapper
     run_command: |         # Lo script specifico della distro
       # 1. rimuove user live

@@ -2,6 +2,7 @@ package calamares
 
 import (
 	"coa/pkg/pilot"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -23,11 +24,8 @@ func PrepareOABootloader(profile *pilot.Profile) error {
 		if step.Action == "calamares" {
 			continue
 		}
-		// Sostituzione universale del disco
-		worker.WriteString("if command -v grub2-probe >/dev/null; then PROBE=\"grub2-probe\"; else PROBE=\"grub-probe\"; fi\n")
-		worker.WriteString("TARGET_DISK=$($PROBE -t disk / 2>/dev/null || echo \"/dev/sda\")\n\n")
-		// cmd := strings.ReplaceAll(step.Command, "/dev/sda", "$TARGET_DISK")
-		// worker.WriteString(fmt.Sprintf("# Step: %s\n%s\n\n", step.Name, cmd))
+		cmd := strings.ReplaceAll(step.RunCommand, "/dev/sda", "$TARGET_DISK")
+		worker.WriteString(fmt.Sprintf("# Step: %s\n%s\n\n", step.Name, cmd))
 	}
 
 	err := os.WriteFile(stagingDir+"/oa-bootloader.sh", []byte(worker.String()), 0755)
