@@ -89,7 +89,7 @@ remaster:
     chroot: false
 
   # ---------------------------------------------------------
-  # 07. GENERAZIONE MENU DI BOOT (GRUB/ISOLINUX/EFI)
+  # 07. GENERAZIONE MENU DI BOOT
   # ---------------------------------------------------------
   - name: "coa-live-menus"
     description: "Generazione configurazioni di boot (GRUB, Isolinux, EFI)"
@@ -101,6 +101,7 @@ remaster:
       VOL_ID="OA_LIVE"
       BOOT_PARAMS="boot=live components quiet splash"
       WORK_DIR="/home/eggs/isodir"
+      PRETTY=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2 || echo "OA Live")
 
       # Creazione directory
       mkdir -p ${WORK_DIR}/boot/grub
@@ -119,13 +120,8 @@ remaster:
 
       search --no-floppy --set=root --label ${VOL_ID}
 
-      menuentry "Start OA Live (Debian)" {
+      menuentry "Start $PRETTY" {
           linux /live/vmlinuz ${BOOT_PARAMS}
-          initrd /live/initrd.img
-      }
-
-      menuentry "Start OA Live (Debian) - RAM mode" {
-          linux /live/vmlinuz ${BOOT_PARAMS} toram
           initrd /live/initrd.img
       }
       EOF
@@ -138,15 +134,9 @@ remaster:
       PROMPT 0
 
       LABEL live
-          MENU LABEL Start OA Live (Debian)
+          MENU LABEL Start $PRETTY
           LINUX /live/vmlinuz
           APPEND ${BOOT_PARAMS}
-          INITRD /live/initrd.img
-
-      LABEL ram
-          MENU LABEL Start OA Live (Debian) - RAM mode
-          LINUX /live/vmlinuz
-          APPEND ${BOOT_PARAMS} toram
           INITRD /live/initrd.img
       EOF
 

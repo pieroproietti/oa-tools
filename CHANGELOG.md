@@ -2,7 +2,7 @@
 
 # Release 0.7.4: The Great Refactoring
 
-Fedora is now aligned to the others distros: arch, debian and manjaro.
+Fedora is now aligned to the others distros: arch, debian and manjaro.  
 
 This release marks a turning point for **oa-tools**. We have moved beyond chasing the specific quirks of individual distributions to build a universal, fluid, and frictionless infrastructure. 
 

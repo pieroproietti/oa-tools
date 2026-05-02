@@ -97,6 +97,7 @@ remaster:
       VOL_ID="OA_LIVE"
       BOOT_PARAMS="root=live:LABEL=${VOL_ID} rd.live.image selinux=0 quiet splash"
       WORK_DIR="/home/eggs/isodir"
+      PRETTY=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2 || echo "OA Live")
 
       # 1. GRUB.cfg
       cat <<EOF > ${WORK_DIR}/boot/grub/grub.cfg
@@ -105,7 +106,7 @@ remaster:
       insmod all_video
       search --no-floppy --set=root --label ${VOL_ID}
 
-      menuentry "Start OA Live (Fedora)" {
+      menuentry "Start $PRETTY" {
           linux /live/vmlinuz ${BOOT_PARAMS}
           initrd /live/initrd.img
       }
@@ -118,7 +119,7 @@ remaster:
       DEFAULT fedora
 
       LABEL fedora
-          MENU LABEL Start OA Live (Fedora)
+          MENU LABEL Start $PRETTY
           LINUX /live/vmlinuz
           APPEND initrd=/live/initrd.img ${BOOT_PARAMS}
       EOF

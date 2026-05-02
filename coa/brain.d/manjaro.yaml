@@ -146,6 +146,7 @@ remaster:
       VOL_ID="OA_LIVE"
       BOOT_PARAMS="misobasedir=manjaro misolabel=${VOL_ID} cow_spacesize=2G quiet splash"
       WORK_DIR="/home/eggs/isodir"
+      PRETTY=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2 || echo "OA Live")
 
       # 1. GRUB.cfg
       cat <<EOF > ${WORK_DIR}/boot/grub/grub.cfg
@@ -154,7 +155,7 @@ remaster:
       insmod all_video
       search --no-floppy --set=root --label ${VOL_ID}
 
-      menuentry "Start Manjaro Live (OA Edition)" {
+      menuentry "Start $PRETTY" {
           linux /live/vmlinuz ${BOOT_PARAMS}
           initrd /live/initrd.img
       }
@@ -166,7 +167,7 @@ remaster:
       TIMEOUT 50
       DEFAULT manjaro
       LABEL manjaro
-          MENU LABEL Start Manjaro Live
+          MENU LABEL Start $PRETTY
           LINUX /live/vmlinuz
           INITRD /live/initrd.img ${BOOT_PARAMS}
       EOF
