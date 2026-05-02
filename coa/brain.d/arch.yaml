@@ -117,7 +117,7 @@ remaster:
       set -e
       # Definiamo le variabili per comodità
       VOL_ID="OA_LIVE"
-      BOOT_PARAMS="boot=live components quiet splash"
+      BOOT_PARAMS="archisobasedir=arch archisolabel=${VOL_ID} cow_spacesize=2G quiet splash"
       WORK_DIR="/home/eggs/isodir"
       PRETTY=$(grep "PRETTY_NAME" /etc/os-release | cut -d'"' -f2 || echo "OA Live")
       cp /usr/share/grub/unicode.pf2 /home/eggs/isodir/boot/grub/font.pf2
