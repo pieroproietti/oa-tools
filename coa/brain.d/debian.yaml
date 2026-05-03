@@ -224,44 +224,24 @@ remaster:
 # ==============================================================================
 install:
   # ---------------------------------------------------------
-  # 01. FINALIZZAZIONE SISTEMA
+  # 01. coa-bootloader DEBIAN
   # ---------------------------------------------------------
   - name: "bootloader"
     description: "remove live, update initramfs, installa GRUB"
     action: "shell"        # Azione diretta senza wrapper
     chroot: false          # Viene usata nel live
     run_command: |
+      #!/bin/bash
       set -e
-      # 1. rimuove user live
+
       rm -f /etc/sudoers.d/00-live
-
-      # Debian bootloaders
-      # 1. Rilevamento modalità di boot
-      if [ -d /sys/firmware/efi ]; then
-          echo "✅ Boot mode: UEFI detected"
-          BOOT_MODE="UEFI"
-      else
-          echo "⚠️ Boot mode: BIOS/Legacy detected"
-          BOOT_MODE="BIOS"
-          # Rilevamento disco solo per BIOS
-          TARGET_DISK=$(grub-probe -t disk / 2>/dev/null || echo "/dev/sda")
-      fi
-
-      # 2. Pulizia (Rimuove privilegi live)
-      rm -f /etc/sudoers.d/00-live
-
-      # 3. Aggiornamento Initramfs
       update-initramfs -u
 
-      # 4. Installazione GRUB
-      if [ "$BOOT_MODE" = "UEFI" ]; then
-          # In UEFI non serve il disco, serve indicare la directory EFI
-          # Assicurati che grub-efi-amd64 sia installato nel chroot!
-          grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Debian --recheck
+      if [ -d /sys/firmware/efi ]; then
+          grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=oa-live --recheck
       else
-          # In BIOS serve il device fisico (es. /dev/sda)
+          TARGET_DISK=$(grub-probe -t disk / 2>/dev/null || echo "/dev/sda")
           grub-install --recheck "$TARGET_DISK"
       fi
 
-      # 5. Configurazione finale
-      update-grub
+update-grub

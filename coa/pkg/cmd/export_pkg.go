@@ -40,7 +40,7 @@ func handleExportPkg(clean bool) {
 		pattern = "oa-tools*.deb"
 		extension = ".deb"
 	case "archlinux":
-		pattern = "oa-tools*.pkg.tar.zst"
+		pattern = "oa-tools-arch-*.pkg.tar.zst"
 		extension = ".pkg.tar.zst"
 	case "fedora":
 		pattern = "oa-tools*.rpm"
@@ -69,7 +69,7 @@ func handleExportPkg(clean bool) {
 
 	if clean {
 		LogCoala("Pulizia remota vecchi pacchetti %s...", extension)
-		cleanCmdStr := fmt.Sprintf("rm -f %soa-tools*%s", remotePkgPath, extension)
+		cleanCmdStr := fmt.Sprintf("rm -f %s%s", remotePkgPath, pattern)
 		sshArgs := append(muxArgs, remoteUserHost, cleanCmdStr)
 
 		if err := exec.Command("ssh", sshArgs...).Run(); err != nil {

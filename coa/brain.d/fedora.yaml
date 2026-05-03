@@ -247,37 +247,31 @@ remaster:
 # ==============================================================================
 install:
   # ---------------------------------------------------------
-  # 01. coa-fedora-finalize
+  # 01. coa-bootloader FEDORA
   # ---------------------------------------------------------
   - name: "bootloader"
     description: "remove live, update initramfs, installa GRUB"
     action: "shell"        # Azione diretta senza wrapper
     chroot: false          # Viene usata nel live
     run_command: |
-      # 1. rimuove user live
+      #!/bin/bash
+      set -e
+
       rm -f /etc/sudoers.d/00-live
-      
-      # Fedora bootloader
-      # 2. DISABILITA BLS (Il tocco magico per Fedora)
-      # Questo forza grub2-mkconfig a scrivere le voci direttamente in grub.cfg
+
       if [ -f /etc/default/grub ]; then
           sed -i 's/GRUB_ENABLE_BLSCFG=true/GRUB_ENABLE_BLSCFG=false/' /etc/default/grub
       fi
 
-      # 3. Rigenerazione Initramfs
       dracut -f --regenerate-all
-      
-      # 4. Installazione Bootloader (Legacy/BIOS)
-      if [ ! -d /sys/firmware/efi ]; then
-          grub2-install --recheck /dev/sda
-      fi
-      
-      # 5. Generazione Configurazione GRUB
-      # Ora che BLS è false, questo scriverà i "menuentry" reali
-      grub2-mkconfig -o /boot/grub2/grub.cfg
-      
-      # 6. Supporto EFI specifico per Fedora
+
       if [ -d /sys/firmware/efi ]; then
+          grub2-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=oa-live --recheck
           mkdir -p /boot/efi/EFI/fedora
           grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
+      else
+          TARGET_DISK=$(grub2-probe -t disk / 2>/dev/null || echo "/dev/sda")
+          grub2-install --target=i386-pc --recheck "$TARGET_DISK"
       fi
+
+      grub2-mkconfig -o /boot/grub2/grub.cfg

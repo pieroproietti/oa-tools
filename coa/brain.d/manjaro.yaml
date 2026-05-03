@@ -270,20 +270,23 @@ remaster:
 install:
 
   # ---------------------------------------------------------
-  # 01. FINALIZZAZIONE SISTEMA
+  # 01. coa-bootloader MANJARO
   # ---------------------------------------------------------
   - name: "finalize"
     description: "Generazione initramfs e configurazione GRUB"
     action: "shell"        # Azione diretta senza wrapper
     run_command: |         # Lo script specifico della distro
-      # 1. rimuove user live
-      rm -f /etc/sudoers.d/00-live
+      #!/bin/bash
+      set -e
 
-      # Rigenera le immagini initramfs per tutti i kernel installati
+      rm -f /etc/sudoers.d/00-live
       mkinitcpio -P
-      
-      # Installa il bootloader (coa sostituirà /dev/sda con il disco reale)
-      grub-install --target=i386-pc --recheck /dev/sda
-      
-      # Genera il file di configurazione di GRUB
+
+      if [ -d /sys/firmware/efi ]; then
+          grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=oa-live --recheck
+      else
+          TARGET_DISK=$(grub-probe -t disk / 2>/dev/null || echo "/dev/sda")
+          grub-install --target=i386-pc --recheck "$TARGET_DISK"
+      fi
+
       grub-mkconfig -o /boot/grub/grub.cfg

@@ -12,7 +12,7 @@ func buildArchPackage(projRoot, baseVer, relNum string) {
 	// Definiamo il contenuto del PKGBUILD come un template dinamico
 	pkgbuildContent := fmt.Sprintf(`# Maintainer: Piero Proietti <piero.proietti@gmail.com>
 # coa is the mind and oa the arm
-pkgname=oa-tools
+pkgname=oa-tools-arch
 pkgver=%s
 pkgrel=%s
 pkgdesc="oa-tools universal Linux remastering"
@@ -31,7 +31,7 @@ depends=(
     'pv'                     # progress meter
     'git'                    # gestione wardrobe
 )
-conflicts=('penguins-eggs')
+conflicts=('penguins-eggs' 'oa-tools')
 backup=('etc/oa-tools.d/oa-tools.yaml')
 options=(!debug)
 
