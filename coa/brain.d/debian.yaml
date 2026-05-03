@@ -122,7 +122,7 @@ remaster:
       # 4. Generazione GRUB.cfg (Main)
       cat <<EOF > ${WORK_DIR}/boot/grub/grub.cfg
       set timeout=5
-      set default=0
+      set default=2
 
       insmod all_video
       insmod gfxterm
@@ -144,6 +144,17 @@ remaster:
       set menu_color_highlight=white/black
       
       search --no-floppy --set=root --label ${VOL_ID}
+
+      # --- ELEMENTI ESTETICI ---
+      # 0. Voce Titolo (non selezionabile o comunque inerte)
+      menuentry "--- Penguins eggs (COA/OA Edition) ---" {
+          true
+      }
+
+      # 1. Voce Vuota (Separatore)
+      menuentry "" {
+          true
+      }
 
       menuentry "Start $PRETTY" {
           linux /live/vmlinuz ${BOOT_PARAMS}
@@ -215,12 +226,15 @@ install:
   # ---------------------------------------------------------
   # 01. FINALIZZAZIONE SISTEMA
   # ---------------------------------------------------------
-  - name: "finalize"
-    description: "Generazione initramfs e configurazione GRUB"
+  - name: "bootloader"
+    description: "remove live, update initramfs, installa GRUB"
     action: "shell"        # Azione diretta senza wrapper
-    run_command: |         # Lo script specifico della distro
-      # rimuove user live
+    chroot: false          # Viene usata nel live
+    run_command: |
+      # 1. rimuove user live
       rm -f /etc/sudoers.d/00-live
+      
+      # Debian bootloader
       update-initramfs -u
       grub-install --recheck /dev/sda
       update-grub

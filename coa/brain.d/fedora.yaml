@@ -257,6 +257,7 @@ install:
       # 1. rimuove user live
       rm -f /etc/sudoers.d/00-live
       
+      # Fedora bootloader
       # 2. DISABILITA BLS (Il tocco magico per Fedora)
       # Questo forza grub2-mkconfig a scrivere le voci direttamente in grub.cfg
       if [ -f /etc/default/grub ]; then
@@ -266,7 +267,7 @@ install:
       # 3. Rigenerazione Initramfs
       dracut -f --regenerate-all
       
-      # 4. Installazione Bootloader (Legacy/BIOS)[cite: 1]
+      # 4. Installazione Bootloader (Legacy/BIOS)
       if [ ! -d /sys/firmware/efi ]; then
           grub2-install --recheck /dev/sda
       fi
