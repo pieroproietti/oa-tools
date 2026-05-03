@@ -20,6 +20,7 @@ arch=('x86_64')
 license=('GPL3')
 depends=(
     'mkinitcpio-archiso'     # FONDAMENTALE per il supporto live su base Arch
+    'efibootmgr'             # EFI
     'libisoburn'             # xorriso
     'squashfs-tools'         # mksquashfs
     'mtools'                 # EFI
