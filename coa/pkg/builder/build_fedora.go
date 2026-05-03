@@ -56,18 +56,18 @@ Summary:        coa is the mind and oa the arm
 License:        GPLv3
 URL:            https://penguins-eggs.net/blog/eggs-bananas
 
-# Dipendenze per completamenti e strumenti di build
-Requires:       bash-completion, squashfs-tools, xorriso, dosfstools, mtools, dracut-live, gdisk, git, rsync, sudo
+# Dipendenze aggiornate: inclusi i font per le emoji (✅) e i tool grafici
+Requires:       bash-completion, squashfs-tools, xorriso, dosfstools, mtools, dracut-live, gdisk, git, rsync, sudo, google-noto-emoji-fonts
 Conflicts:      penguins-eggs
 
 %%description
 oa-tools: la rimasterizzazione universale secondo la filosofia eggs-bananas.
-Include il supporto completo per bash, zsh e fish completions.
+Include il supporto completo per shell completions e branding grafico per il boot.
 
 %%install
 rm -rf %%{buildroot}
 mkdir -p %%{buildroot}/usr/bin
-mkdir -p %%{buildroot}/etc/oa-tools.d/brain.d
+mkdir -p %%{buildroot}/etc/oa-tools.d/brain.d/assets
 mkdir -p %%{buildroot}/usr/share/man/man1
 mkdir -p %%{buildroot}/usr/share/bash-completion/completions
 mkdir -p %%{buildroot}/usr/share/zsh/vendor-completions
@@ -78,8 +78,10 @@ install -m 0755 %s/oa/oa %%{buildroot}/usr/bin/oa
 install -m 0755 %s/coa/coa %%{buildroot}/usr/bin/coa
 ln -s coa %%{buildroot}/usr/bin/eggs
 
-# 2. Configurazione "Brain" e YAML
+# 2. Configurazione "Brain", YAML e Assets (Splash/Fonts)
 cp %s/coa/brain.d/*.yaml %%{buildroot}/etc/oa-tools.d/brain.d/
+cp %s/coa/brain.d/assets/* %%{buildroot}/etc/oa-tools.d/brain.d/assets/
+
 cat <<EOF > %%{buildroot}/etc/oa-tools.d/oa-tools.yaml
 ---
 system:
@@ -102,7 +104,7 @@ install -m 0644 %s/coa/docs/completion/coa.bash %%{buildroot}/usr/share/bash-com
 install -m 0644 %s/coa/docs/completion/coa.zsh %%{buildroot}/usr/share/zsh/vendor-completions/_coa
 install -m 0644 %s/coa/docs/completion/coa.fish %%{buildroot}/usr/share/fish/vendor_completions.d/coa.fish
 
-# Patch Bash: registra l'alias 'eggs' per usare la stessa funzione di 'coa'
+# Patch Bash: registra l'alias 'eggs'
 echo "complete -o default -F __start_coa eggs" >> %%{buildroot}/usr/share/bash-completion/completions/coa
 
 # Symlink per gli alias dei completamenti
@@ -116,8 +118,10 @@ ln -s coa.fish %%{buildroot}/usr/share/fish/vendor_completions.d/eggs.fish
 /usr/bin/eggs
 %%dir /etc/oa-tools.d
 %%dir /etc/oa-tools.d/brain.d
+%%dir /etc/oa-tools.d/brain.d/assets
 %%config(noreplace) /etc/oa-tools.d/oa-tools.yaml
 /etc/oa-tools.d/brain.d/*.yaml
+/etc/oa-tools.d/brain.d/assets/*
 /usr/share/man/man1/*.1.gz
 /usr/share/bash-completion/completions/*
 /usr/share/zsh/vendor-completions/*
@@ -125,8 +129,9 @@ ln -s coa.fish %%{buildroot}/usr/share/fish/vendor_completions.d/eggs.fish
 
 %%changelog
 * Fri May 01 2026 Piero Proietti <piero.proietti@gmail.com> - %s-%s
-- Added full bash-completion support for coa and eggs alias
-`, cleanVer, relNum, projRoot, projRoot, projRoot, cleanVer, projRoot, projRoot, projRoot, projRoot, cleanVer, relNum)
+- Added full branding assets (splash screen and boot fonts)
+- Added google-noto-emoji-fonts dependency for proper terminal rendering
+`, cleanVer, relNum, projRoot, projRoot, projRoot, projRoot, cleanVer, projRoot, projRoot, projRoot, projRoot, cleanVer, relNum)
 
 	os.WriteFile(specPath, []byte(specContent), 0644)
 
@@ -144,7 +149,7 @@ ln -s coa.fish %%{buildroot}/usr/share/fish/vendor_completions.d/eggs.fish
 	if len(matches) > 0 {
 		finalPkg := filepath.Join(projRoot, filepath.Base(matches[0]))
 		if err := moveFile(matches[0], finalPkg); err == nil {
-			LogBuild("✅ RPM Package created with Bash-Completion: %s", finalPkg)
+			LogBuild("✅ RPM Package created with Bash-Completion and Assets: %s", finalPkg)
 		} else {
 			LogError("Failed to move RPM to root: %v", err)
 		}

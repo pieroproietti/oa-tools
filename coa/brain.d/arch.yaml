@@ -181,7 +181,7 @@ remaster:
       DEFAULT live
 
       MENU BACKGROUND splash.png
-      MENU TITLE $PRETTY
+      MENU TITLE Penguins eggs (COA/OA edition)
 
       LABEL live
           MENU LABEL Start $PRETTY

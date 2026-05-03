@@ -20,6 +20,7 @@ func PrepareOABootloader(profile *pilot.Profile) error {
 	worker.WriteString("# Rilevamento dinamico disco\n")
 	worker.WriteString("TARGET_DISK=$(grub-probe -t disk / 2>/dev/null || echo \"/dev/sda\")\n\n")
 
+	// chiama
 	for _, step := range profile.Install {
 		if step.Action == "calamares" {
 			continue
