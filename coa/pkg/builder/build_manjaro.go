@@ -21,6 +21,7 @@ license=('GPL3')
 # Optimized Manjaro dependencies for oa-tools
 depends=(
     'manjaro-tools-iso'      # Hook miso per initramfs (fondamentale su Manjaro)
+    'efibootmgr'             # EFI
     'libisoburn'             # xorriso
     'squashfs-tools'         # mksquashfs
     'mtools'                 # manipolazione EFI img
