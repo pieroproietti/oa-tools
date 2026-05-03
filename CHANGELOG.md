@@ -1,8 +1,28 @@
 # Changelog - oa-tools
 
+# Changelog - v0.7.5 (Evolution Edition)
+
+## [0.7.5] - 2026-05-03
+
+### Added
+- **Universal Boot Branding**: Integrated support for custom splash screens (`splash.png`) and Unicode fonts (`unicode.pf2`) for both BIOS (Isolinux) and UEFI (GRUB).
+- **Enhanced GRUB Layout**: Added a dynamic title and visual spacing to the GRUB menu for a professional look.
+- **Dynamic OS Detection**: Boot menus now automatically display the distribution name (via `$PRETTY_NAME`).
+- **Comprehensive Shell Support**: Full completions for Bash, Zsh, and Fish, including automatic 'eggs' alias registration.
+- **Fedora UI Fixes**: Added `google-noto-emoji-fonts` as a dependency in the RPM builder to ensure correct symbol rendering in the terminal.
+
+### Fixed
+- **Fedora UEFI Visibility**: Added `efi_gop` and `efi_uga` modules to GRUB configuration to fix splash screen issues in UEFI mode.
+- **Isolinux Compatibility**: Standardized the `APPEND` syntax for boot parameters, ensuring a successful boot on Fedora and other non-Debian systems even when using Debian bootloaders.
+- **RPM Asset Packaging**: Updated the Go builder to correctly package and deploy branding assets into `/etc/oa-tools.d/brain.d/assets/`.
+
+### Technical Notes
+- The "oa" dialect is now fully established for egg-based eggs-bananas remastering.
+- All configurations are now centralized in the "brain" directory for better portability.
+
 # Release 0.7.4: The Great Refactoring
 
-Fedora is now aligned to the others distros: arch, debian and manjaro.
+Fedora is now aligned to the others distros: arch, debian and manjaro.  
 
 This release marks a turning point for **oa-tools**. We have moved beyond chasing the specific quirks of individual distributions to build a universal, fluid, and frictionless infrastructure. 
 
