@@ -77,11 +77,12 @@ coa/coa build
 ## 📜 Philosophy
 The **oa-tools** project aims to provide a "Passepartout" for Linux remastering. By separating the **Mind** (Go) from the **Workhorse** (C), we achieve a clean, maintainable, and incredibly fast workflow that can adapt to any distribution without changing the user experience.
 
+Documentation about oa-tools can be found on [DOCS](/DOCS/).
+
 The article [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy can be read on my blog.
 
-Documentation can be found on [DOCS](/DOCS/).
-
 ![coaoa](./coaoa.jpeg)
+
 
 ---
 *Created with passion by Piero Proietti.*
