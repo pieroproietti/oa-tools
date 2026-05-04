@@ -77,7 +77,7 @@ coa/coa build
 ## 📜 Philosophy
 The **oa-tools** project aims to provide a "Passepartout" for Linux remastering. By separating the **Mind** (Go) from the **Workhorse** (C), we achieve a clean, maintainable, and incredibly fast workflow that can adapt to any distribution without changing the user experience.
 
-The [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy.
+The article [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy can be read on my blog.
 
 Documentation can be found on [DOCS](/DOCS/).
 
