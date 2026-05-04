@@ -81,5 +81,7 @@ The [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy.
 
 Documentation can be found on [DOCS](/DOCS/).
 
+|[coaos](./coaoa.jpeg)
+
 ---
 *Created with passion by Piero Proietti.*
