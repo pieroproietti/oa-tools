@@ -12,6 +12,8 @@ Tutto ciò che riguarda l'engine in C, la manipolazione a basso livello e l'arch
 * **[Il "Cervello" JSON](./OA.md#architettura-json-driven)**: Come configurare l'ereditarietà dei parametri, gruppi e Initrd senza ricompilare il codice.
 * **[Architettura e Sicurezza (C Engine)](./OA.md#architettura-e-sicurezza)**: Dettagli sull'isolamento (MS_PRIVATE), Zero-Copy, OverlayFS e scudo Anti-Inception.
 
+Ecco un esempio di [oa-plan.json](./oa-plan.json) digerito da oa!
+
 ### Strategie del Motore
 * **[Compressione mksquashfs](./OA.md#mksquashfs)**: Utilizzo del Turbo SquashFS (zstd) per massimizzare le performance.
 * **[ISO Bootloader Universale](./OA.md#bootloader)**: L'astrazione della complessità di avvio tramite l'azione `coa-bootloaders` (GRUB monolitico e isolinux).
