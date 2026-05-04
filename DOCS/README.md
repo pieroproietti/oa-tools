@@ -4,6 +4,8 @@
 **oa** (termine dialettale per indicare *eggs*) è un motore avanzato per il remastering e la creazione di sistemi live GNU/Linux. 
 L'intero progetto abbraccia la filosofia di sviluppo descritta in [Eggs & Bananas](https://penguins-eggs.net/blog/eggs-bananas): trovare soluzioni dirette, semplici e funzionali, evitando inutili complicazioni architetturali.
 
+Maggiori infomazioni: [OA](./OA.md).
+
 ## 2. Il "Cervello" JSON: Configurare invece di Codificare
 Il vero punto di forza di oa è la sua architettura **JSON-Driven**. 
 Per portare il motore su una nuova distribuzione (che sia basata su Debian, Arch, Fedora o Suse) **non è necessario modificare o ricompilare il codice sorgente in C**. 
@@ -20,44 +22,24 @@ Sotto il cofano guidato dal JSON, il codice C implementa funzionalità di sistem
 * **Gestione Utenti Nativa**: Tramite funzioni in C dedicate (es. `yocto_add_user_to_groups`), il motore modifica direttamente i file di sistema per iniettare le identità, senza dipendere in alcun modo dai binari dell'host.
 * **Anti-Inception Shield**: Un mascheramento globale tramite `tmpfs` previene dinamicamente loop di scansione ricorsivi.
 
-## 4. Boot e Creazione ISO
-* **Turbo SquashFS**: Compressione multi-core ad alte prestazioni (es. `zstd` livello 3) per generare il filesystem live in tempi minimi.
-* **Gestione UEFI Universale**: L'azione `action_uefi` astrae la complessità del boot estraendo a caldo i binari necessari (`grubx64.efi`, `bootx64.efi`) e generando dinamicamente il `grub.cfg` da passare a `xorriso` per il pacchetto finale.
+## Strategie
+## 4. mksquashfs
+* **Turbo SquashFS**: Compressione multi-core ad alte prestazioni (es. `zstd` livello 3) per generare il filesystem live in tempi minimi. 
 
-## 5. Sviluppi Futuri
-La roadmap attuale punta a snellire ulteriormente l'integrazione:
-* Implementazione del **Secure Boot** (attualmente disabilitato per garantire l'avvio base).
-* Estensione del supporto nativo a `dracut` e `mkinitcpio` nell'azione `action_initrd`.
-* Ottimizzazione progressiva del motore di scansione filesystem (`action_scan`).
+## 5. ISO bootloader universale
+* I bootloader hanno la funzione di avviare linux, ho pensato gia in penguins-eggs che per ottenere una migliore manutenzione fosse necessario prvedere una sola sorgente per i bootloader sulla ISO: grub ed isolinux. L'azione `coa-bootloaders` astrae la complessità del boot estraendo i binari necessari da quello di Debian ed installamdo solo il grub monolitico. Si perde la possibilità del secure boot, ma basta disabilitarlo per risolvere e, sul sistema installato non cambia niente.
 
-## 6. Riferimento Azioni JSON
+## 6. mirror dei gruppi e gestione utenti yacto_style
+Ogni distribuzione ha i propri gruppi base e, non solo, ci possono essere gruppi creati ad hoc dai customizzatori, starci appresso è impossibile, così ho ideato una nuova strategia di mirroring dei gruppi e scritto una funzione yocto_style che va a modificare direttamente i file responsabili (passwd, groups e shadow).
 
-In questa sezione vengono documentate le singole azioni configurabili tramite il "cervello" JSON. Ogni azione definisce il comportamento specifico che il motore in C andrà ad eseguire sul sistema.
+COA/OA aggiunge all'utente live i gruppi dell'utente SUDO_USER con una strategia mirror, prescingendo - quindi - dalle diversità presenti in ogni distribuzione.
 
-### 6.1 `action_users`
-Questa azione si occupa dell'iniezione nativa degli utenti e dei loro privilegi sul sistema live, senza fare affidamento sui binari dell'host (come `useradd` o `usermod`).
+Questo, insieme alla funzione yocto_style, permette un approccio universale agli utenti ed ai gruppi di appartenenza.
 
-**Parametri Chiave:**
-* **`username`**: Il nome dell'utente live (es. `"live"` o `"oa"`).
-* **`password`**: La password associata (spesso lasciata vuota o predefinita per i sistemi live).
-* **`groups`**: Un array di stringhe che definisce i gruppi secondari a cui l'utente deve appartenere.
+# Approfondimenti
 
-**Esempio pratico (Il problema `sudo` vs `wheel`):**
-Invece di avere logiche complesse nel codice C, la differenza dei permessi di amministrazione tra distribuzioni si risolve nel JSON. 
+## [ARCHITECTURE](COA_ARCHITECTURE.md)
+## PACKAGE [pilot](./COA_PKG_PILOT.md)
+## PACKAGE [engine](./COA_PKG_ENGINE.md)
 
-*Configurazione per derivate Debian:*
-```json
-"action_users": {
-  "username": "oa",
-  "groups": ["sudo", "audio", "video", "plugdev"]
-}
-```
 
-*Configurazione per derivate Arch/RedHat:*
-```json
-"action_users": {
-  "username": "oa",
-  "groups": ["wheel", "audio", "video", "input"]
-}
-```
-Il motore C, tramite la funzione `yocto_add_user_to_groups`, leggerà questo array e modificherà direttamente il file `/etc/group` del filesystem isolato, garantendo una compatibilità universale.

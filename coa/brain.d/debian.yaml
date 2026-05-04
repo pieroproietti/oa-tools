@@ -244,4 +244,4 @@ install:
           grub-install --recheck "$TARGET_DISK"
       fi
 
-update-grub
+      update-grub
