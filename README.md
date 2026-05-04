@@ -31,7 +31,7 @@ The project is divided into two distinct entities: **oa** (The Workhorse) and **
 
 We have transitioned to a monorepo structure to ensure perfect synchronization between the engine (oa) and the orchestrator (coa).
 
-### 🦾 [oa (eggs in my dialect)](./DOCS/OA.md) - The Workhorse
+### 🦾 [oa (eggs in my dialect)](./DOCS/README.md) - The Workhorse
 **Language: C**
 `oa` is the low-level engine. It handles the "heavy lifting" of the system:
 - Managing OverlayFS and mount points.

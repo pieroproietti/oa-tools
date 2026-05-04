@@ -12,8 +12,6 @@ Tutto ciò che riguarda l'engine in C, la manipolazione a basso livello e l'arch
 * **[Il "Cervello" JSON](./OA.md#architettura-json-driven)**: Come configurare l'ereditarietà dei parametri, gruppi e Initrd senza ricompilare il codice.
 * **[Architettura e Sicurezza (C Engine)](./OA.md#architettura-e-sicurezza)**: Dettagli sull'isolamento (MS_PRIVATE), Zero-Copy, OverlayFS e scudo Anti-Inception.
 
-Ecco un esempio di [oa-plan.json](./oa-plan.json) digerito da oa!
-
 ### Strategie del Motore
 * **[Compressione mksquashfs](./OA.md#mksquashfs)**: Utilizzo del Turbo SquashFS (zstd) per massimizzare le performance.
 * **[ISO Bootloader Universale](./OA.md#bootloader)**: L'astrazione della complessità di avvio tramite l'azione `coa-bootloaders` (GRUB monolitico e isolinux).
@@ -23,7 +21,18 @@ Ecco un esempio di [oa-plan.json](./oa-plan.json) digerito da oa!
 
 ## 🧠 L'Orchestratore: "coa" (The Mind)
 Documentazione relativa al ciclo di vita, la creazione delle ISO e i package Go.
+          
 
 * **[Architettura Generale di COA](./COA_ARCHITECTURE.md)**: Panoramica sul funzionamento dell'orchestratore.
-* **[Package: Pilot](./COA_PKG_PILOT.md)**: Dettagli e documentazione del pacchetto *pilot*.
+* **[Package: assets]()**: Contiene la configurazione calamares-base per coa/oa ed altro.
+* **[Package: bleach]()**: Contiene le routine di pulizia per le varie distribuzioni.
+* **[Package: builder]()**: Generazione dei pacchetti nativi coa/oa per le varie distribuzioni.
+* **[Package: calamares]()**: Generazione della configurazione di calamares eseguita sul live..
+* **[Package: cmd]()**: Tutti i comando di coa sono definiti qua..
+* **[Package: Distro]()**: Rileva la distribuzione in uso.
 * **[Package: Engine](./COA_PKG_ENGINE.md)**: Dettagli e documentazione del pacchetto *engine*.
+* **[Package: Pilot](./COA_PKG_PILOT.md)**: Dettagli e documentazione del pacchetto *pilot*.
+* **[Package: tailor]()**: Il sarto che gestisce il wardrobe per i costumi.
+* **[Package: utils]()**: Utilità generali.
+
+  
