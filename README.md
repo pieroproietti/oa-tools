@@ -36,7 +36,7 @@ We have transitioned to a monorepo structure to ensure perfect synchronization b
 `oa` is the low-level engine. It handles the "heavy lifting" of the system:
 - Managing OverlayFS and mount points.
 - Executing SquashFS compression.
-- Building the ISO structures (ISOLINUX/UEFI).
+- Remove and create users and groupt via yocto_style functions.
 - Interacting directly with the Linux Kernel and system binaries.
 - **Philosophy:** Performance, stability, and zero-dependency execution.
 
@@ -53,7 +53,7 @@ For coa commands, see [coa command Reference](/coa/docs/md/README.md).
 ## 🚀 Getting Started
 
 ### Prerequisites
-- A Linux system (Debian-based, Arch, or Fedora).
+- A Linux system (Debian-based, Arch-based. Fedora-based or Manjaro-based).
 - `gcc` and `make` (for `oa`).
 - `golang` 1.21+ (for `coa`).
 
@@ -67,7 +67,7 @@ This will compile both binaries:
 - `./oa/oa` (The Engine)
 - `./coa/coa` (The Orchestrator)
 
-> TIP: You can create native package .deb/PKGBUILD using
+> TIP: You can create native package like: .deb, PKGBUILD, rpm using
 ```
 coa/coa build
 ```
