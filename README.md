@@ -25,8 +25,6 @@ Welcome to **oa-tools**, born from `penguins-eggs` experience. This monorepo hos
 
 The project is divided into two distinct entities: **oa** (The Workhorse) and **coa** (The Mind).
 
-The [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy.
-
 ---
 
 ## 🏗 Project Architecture
@@ -78,6 +76,8 @@ coa/coa build
 
 ## 📜 Philosophy
 The **oa-tools** project aims to provide a "Passepartout" for Linux remastering. By separating the **Mind** (Go) from the **Workhorse** (C), we achieve a clean, maintainable, and incredibly fast workflow that can adapt to any distribution without changing the user experience.
+
+The [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy.
 
 Documentation can be found on [DOCS](/DOCS/).
 
