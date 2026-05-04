@@ -47,7 +47,7 @@ The name derives from the dialect word coa, referring to the act of brooding or 
 
 **Language: Go**
 
-For coa commands, see [coa command Reference](/coa/docs/md/README.md).
+For coa commands, see [coa command Reference](/DOCS/COA_COMMANDS.md).
 
 
 ## 🚀 Getting Started
