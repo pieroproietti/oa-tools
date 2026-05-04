@@ -25,6 +25,8 @@ Welcome to **oa-tools**, born from `penguins-eggs` experience. This monorepo hos
 
 The project is divided into two distinct entities: **oa** (The Workhorse) and **coa** (The Mind).
 
+The [eggs-bananas](https://penguins-eggs.net/blog/eggs-bananas) philosophy.
+
 ---
 
 ## 🏗 Project Architecture
