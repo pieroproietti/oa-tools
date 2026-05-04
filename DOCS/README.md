@@ -8,7 +8,7 @@ Questa directory contiene i dettagli architetturali, le filosofie di sviluppo e 
 ## 🦾 Il Motore: "oa" (The Workhorse)
 Tutto ciò che riguarda l'engine in C, la manipolazione a basso livello e l'architettura JSON-Driven.
 
-* **[Introduzione e Filosofia (Eggs & Bananas)](./OA.md#introduzione)**: L'approccio minimalista e diretto per il remastering di sistemi live.
+* **[Introduzione)](./OA.md#introduzione)**: L'approccio minimalista e diretto per il remastering di sistemi live.
 * **[Il "Cervello" JSON](./OA.md#architettura-json-driven)**: Come configurare l'ereditarietà dei parametri, gruppi e Initrd senza ricompilare il codice.
 * **[Architettura e Sicurezza (C Engine)](./OA.md#architettura-e-sicurezza)**: Dettagli sull'isolamento (MS_PRIVATE), Zero-Copy, OverlayFS e scudo Anti-Inception.
 
