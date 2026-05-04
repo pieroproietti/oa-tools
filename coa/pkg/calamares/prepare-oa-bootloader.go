@@ -14,7 +14,9 @@ func PrepareOABootloader(profile *pilot.Profile) error {
 		return err
 	}
 
-	// 1. GENERAZIONE DI oa-bootloader.sh (Il Lavoratore nel Target)
+	/**
+	* 1. GENERAZIONE DI oa-bootloader.sh (Il Lavoratore nel Target)
+	 */
 	var worker strings.Builder
 	worker.WriteString("#!/bin/bash\nset -e\n\n")
 	worker.WriteString("# Rilevamento dinamico disco\n")
@@ -34,12 +36,15 @@ func PrepareOABootloader(profile *pilot.Profile) error {
 		return err
 	}
 
-	// 2. GENERAZIONE DI oa-prepare-target.sh (Il Ponte sulla Live)
+	/**
+	* 2. GENERAZIONE DI oa-prepare-target.sh
+	 */
 	bridgeScript := `#!/bin/bash
 TARGET_ROOT=$(mount | grep proc | grep calamares | awk '{print $3}' | sed -e "s#/proc##g")
 if [ -z "$TARGET_ROOT" ]; then TARGET_ROOT=$(ls -d /tmp/calamares-root-* | head -n 1); fi
 
-echo "OA-Bootloader: Operando su $TARGET_ROOT"
+
+echo "oa-bootloader: Operando su $TARGET_ROOT"
 cp /tmp/coa/oa-bootloader.sh "$TARGET_ROOT/tmp/oa-bootloader.sh"
 chmod +x "$TARGET_ROOT/tmp/oa-bootloader.sh"
 chroot "$TARGET_ROOT" /bin/bash /tmp/oa-bootloader.sh
@@ -50,7 +55,7 @@ rm "$TARGET_ROOT/tmp/oa-bootloader.sh"
 		return err
 	}
 
-	// 3. GENERAZIONE DEL MODULO (Nella staging area)
+	// 3. GENERAZIONE di oa-prepare-target
 	moduleContent := `---
 dontChroot: true
 timeout: 600
