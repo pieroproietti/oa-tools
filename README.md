@@ -31,16 +31,16 @@ The project is divided into two distinct entities: **oa** (The Workhorse) and **
 
 We have transitioned to a monorepo structure to ensure perfect synchronization between the engine (oa) and the orchestrator (coa).
 
-### 🦾 [oa (eggs in my dialect)](./oa) - The Workhorse
+### 🦾 [oa (eggs in my dialect)](./DOCS/README.md) - The Workhorse
 **Language: C**
 `oa` is the low-level engine. It handles the "heavy lifting" of the system:
 - Managing OverlayFS and mount points.
 - Executing SquashFS compression.
-- Building the ISO structures (ISOLINUX/UEFI).
+- Remove and create users and groupt via yocto_style functions.
 - Interacting directly with the Linux Kernel and system binaries.
 - **Philosophy:** Performance, stability, and zero-dependency execution.
 
-### 🧠 [coa (brooding in my dialect)](./coa) - The brain
+### 🧠 [coa (brooding in my dialect)](./DOCS/README.md) - The brain
 It manages the full lifecycle: from laying the ISO to the final installation.
 
 The name derives from the dialect word coa, referring to the act of brooding or incubating eggs until they are ready to hatch.
@@ -53,7 +53,7 @@ For coa commands, see [coa command Reference](/coa/docs/md/README.md).
 ## 🚀 Getting Started
 
 ### Prerequisites
-- A Linux system (Debian-based, Arch, or Fedora).
+- A Linux system (Debian-based, Arch-based. Fedora-based or Manjaro-based).
 - `gcc` and `make` (for `oa`).
 - `golang` 1.21+ (for `coa`).
 
@@ -67,7 +67,7 @@ This will compile both binaries:
 - `./oa/oa` (The Engine)
 - `./coa/coa` (The Orchestrator)
 
-> TIP: You can create native package .deb/PKGBUILD using
+> TIP: You can create native package like: .deb, PKGBUILD, rpm using
 ```
 coa/coa build
 ```
